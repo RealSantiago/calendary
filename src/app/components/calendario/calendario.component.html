@@ -1,0 +1,55 @@
+<div class="container">
+  <!-- ENCABEZADO DE LOS DÍAS -->
+  <div class="days-header">
+    <ng-container *ngFor="let day of daysShows; let i = index">
+      <div class="container-head">
+        <p>Inicial: {{ day.initial | currency }}</p>
+        <p>Estimado: {{ day.estimate | currency }}</p>
+        <p>Confirmado: {{ day.final | currency }}</p>
+        <div class="day-container">{{ daysOfWeek[i] }}</div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- GRID DE DÍAS -->
+  <div class="days-grid">
+    <div
+      class="day-cell"
+      *ngFor="let day of daysShows"
+      (click)="onSelectDay(day)"
+    >
+      <!-- CABECERA DEL DÍA -->
+      <div class="day-header">
+        <span>{{ day.fecha.getDate() }}</span>
+        <div style="flex: 1 1 auto"></div>
+        <span>{{ day.final | currency }}</span>
+      </div>
+
+      <!-- LISTA DE FOLIOS -->
+      <div class="folio" *ngFor="let folio of day.folios" draggable="true">
+        <div class="folio-content">
+          <span class="folio-text">
+            {{ folio.folio }} - {{ folio.departament }} -
+            {{ folio.total | currency }}
+          </span>
+          <button mat-icon-button>
+            <mat-icon>favorite</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- <app-analytic></app-analytic> -->
+  </div>
+
+  <!-- MENSAJE SI SELECCIONA UN DÍA -->
+  <div class="empty" *ngIf="daySelect">
+    <button
+      (click)="daySelect = undefined"
+      mat-icon-button
+      style="position: absolute; right: 10px"
+    >
+      <mat-icon fontIcon="close"></mat-icon>
+    </button>
+    <span>{{ daySelect.fecha | date : "mediumDate" }}</span>
+  </div>
+</div>

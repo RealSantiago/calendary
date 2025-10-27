@@ -1,0 +1,8 @@
+/* Efecto visual de semana seleccionada */
+::ng-deep
+  .mat-calendar-body-cell.week-selected
+  > .mat-calendar-body-cell-content {
+  background-color: #3f51b5;
+  color: white;
+  border-radius: 50%;
+}

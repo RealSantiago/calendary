@@ -1,10 +1,150 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { CalendarioComponent } from './components/calendario/calendario.component';
+import { FoliosService } from './services/folios.service';
+import {
+  Datum,
+  Folio,
+  IFolioByDate,
+  Week,
+} from './interfaces/folios.interfaces';
+import { ITitleWeek } from './interfaces/calendary.interfaces';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrl: './app.component.scss',
 })
-export class AppComponent {
-  title = 'calendario';
+export class AppComponent implements OnInit, AfterViewInit {
+  @ViewChild(CalendarioComponent) public calendariC?: CalendarioComponent;
+
+  public titleWeek: ITitleWeek = {
+    week: '',
+    year: '',
+    month: '',
+    weekNumber: 0,
+  };
+
+  public foliosPeding = this.service.folios$;
+
+  constructor(public service: FoliosService) {}
+
+  ngOnInit(): void {
+    // this.service.getProgrammingFolio({week_number:}).subscribe({
+    //   next: (res) => {
+    //     const { data, pending } = res;
+    //     const foliosByDate: IFolioByDate = {};
+    //     console.log(data, 'data');
+    //     data.forEach((program: Datum) => {
+    //       const { week } = program;
+    //       Object.values(week).forEach((dayFolios: Folio[]) => {
+    //         dayFolios.forEach((folio: Folio) => {
+    //           const fecha = folio.scheduled_payment_date
+    //             ? new Date(folio.scheduled_payment_date)
+    //                 .toISOString()
+    //                 .split('T')[0]
+    //             : new Date(folio.date_request).toISOString().split('T')[0];
+    //           if (!foliosByDate[fecha]) {
+    //             foliosByDate[fecha] = {
+    //               initial: 0,
+    //               estimate: 0,
+    //               final: 0,
+    //               folios: [],
+    //             };
+    //           }
+    //           foliosByDate[fecha].initial = Number(program.initial_amount);
+    //           foliosByDate[fecha].estimate = Number(program.final_amount);
+    //           foliosByDate[fecha].folios.push(folio);
+    //         });
+    //       });
+    //     });
+    //     this.service.setFoliosPending(pending);
+    //     this.service.setFoliosByDate(foliosByDate);
+    //   },
+    // });
+  }
+
+  ngAfterViewInit() {
+    const resizer = document.querySelector('.resizer') as HTMLElement;
+    const bottom = document.querySelector('.bottom-section') as HTMLElement;
+    const container = document.querySelector('.container') as HTMLElement;
+
+    let startY: number;
+    let startHeight: number;
+
+    resizer.addEventListener('mousedown', (e: MouseEvent) => {
+      e.preventDefault(); // evita selección de texto al arrastrar
+      startY = e.clientY;
+      startHeight = bottom.offsetHeight;
+
+      const onMouseMove = (event: MouseEvent) => {
+        const dy = startY - event.clientY;
+        const newHeight = startHeight + dy;
+
+        const minHeight = 150; // mínimo visible
+        const maxHeight = container.offsetHeight - 150; // límite superior
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+          bottom.style.height = `${newHeight}px`;
+        }
+      };
+
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    });
+  }
+
+  onChangeDate(date: any): void {
+    this.titleWeek = date;
+    this.onGetData();
+  }
+
+  onGetData(): void {
+    console.log('hola');
+
+    this.service
+      .getProgrammingFolio({
+        week_number: this.titleWeek.weekNumber,
+        year: this.titleWeek.year,
+      })
+      .subscribe({
+        next: (res) => {
+          console.log(res, '00');
+          console.log(this.titleWeek);
+
+          const { data, pending } = res;
+          const foliosByDate: IFolioByDate = {};
+          console.log(data, 'data');
+          data.forEach((program: Datum) => {
+            const { week } = program;
+            Object.values(week).forEach((dayFolios: Folio[]) => {
+              dayFolios.forEach((folio: Folio) => {
+                const fecha = folio.scheduled_payment_date
+                  ? new Date(folio.scheduled_payment_date)
+                      .toISOString()
+                      .split('T')[0]
+                  : new Date(folio.date_request).toISOString().split('T')[0];
+                if (!foliosByDate[fecha]) {
+                  foliosByDate[fecha] = {
+                    initial: 0,
+                    estimate: 0,
+                    final: 0,
+                    folios: [],
+                  };
+                }
+                foliosByDate[fecha].initial = Number(program.initial_amount);
+                foliosByDate[fecha].estimate = Number(program.final_amount);
+                foliosByDate[fecha].folios.push(folio);
+              });
+            });
+          });
+          this.service.setFoliosPending(pending);
+          this.service.setFoliosByDate(foliosByDate);
+        },
+      });
+  }
 }

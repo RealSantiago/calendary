@@ -1,0 +1,26 @@
+<div #containerRef style="position: relative; display: inline-block">
+  <!-- Botón visible -->
+  <button mat-raised-button color="primary" (click)="picker.open()">
+    {{
+      startOfWeek && endOfWeek
+        ? (weekReady?.week | titlecase)
+        : "Seleccionar semana"
+    }}
+  </button>
+
+  <!-- Datepicker oculto -->
+  <mat-form-field
+    appearance="fill"
+    style="position: absolute; opacity: 0; pointer-events: none; z-index: -1"
+  >
+    <input
+      matInput
+      [matDatepicker]="picker"
+      [matDatepickerFilter]="myFilter"
+      [value]="dateSelection"
+      (dateChange)="onSelectDate($event)"
+    />
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker [dateClass]="dateClass"></mat-datepicker>
+  </mat-form-field>
+</div>

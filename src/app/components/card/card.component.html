@@ -1,0 +1,14 @@
+<div class="container" *ngIf="dataCard">
+  <div class="content">
+    <span>{{ (dataCard.department | titlecase) || "No definido" }}</span>
+    <div>{{ dataCard.item_list | transformData }}</div>
+    <div>{{ (dataCard.destiny_paying | titlecase) || "No definido" }}</div>
+  </div>
+  <div class="price">
+    <span style="font-size: 12px; text-align: right"
+      >ID: {{ dataCard.id }}</span
+    >
+    <div>{{ dataCard.total | currency }}</div>
+    <div>{{ dataCard.folio || "Sin folio" }}</div>
+  </div>
+</div>
