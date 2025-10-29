@@ -3,4 +3,5 @@ export interface ITitleWeek {
   year: string;
   month: string;
   weekNumber: number;
+  arrayOfDays: Date[];
 }

@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IParamas, Welcome } from '../interfaces/folios.interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -23,25 +22,28 @@ export class FoliosService {
     this._foliosByDate$.next({ ...folios });
   }
 
+  get foliosByDate(): any {
+    return this._foliosByDate$.getValue();
+  }
+
   // ENDPOINTS
 
-  getProgrammingFolio(dataParams: IParamas): Observable<Welcome> {
+  getProgrammingFolio(dataParams: any): Observable<any> {
     let paramsQ = new HttpParams();
 
-    (Object.keys(dataParams) as (keyof typeof dataParams)[]).forEach((key) => {
+    Object.keys(dataParams).forEach((key) => {
       const value = dataParams[key];
       if (value !== '' && value != null) {
         paramsQ = paramsQ.set(key, value);
       }
     });
 
-    const token: string = '2628|BVOxdEY7jUbee8JpLtUcA3rcBakOnvoRzS0ob2D1';
-
+    const token: string = '2638|CIwTBfrB76tgGseQ2OPa8DXtJqtImJrqAfZjqgMH';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
 
-    return this.http.get<Welcome>('http://34.2.4.36:8001/api/schedule', {
+    return this.http.get<any>('http://34.2.4.36:8001/api/schedule', {
       headers: headers,
       params: paramsQ,
     });

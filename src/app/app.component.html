@@ -4,7 +4,7 @@
     <div class="sub-container">
       <span>
         Semana de Gasto
-        <strong>{{ titleWeek.month | titlecase }}</strong>
+        <strong>{{ titleWeek?.month | titlecase }}</strong>
       </span>
     </div>
 
@@ -28,7 +28,7 @@
   <div class="content main-content">
     <div class="left">
       <app-card
-        *ngFor="let folio of foliosPeding | async"
+        *ngFor="let folio of service.folios$ | async"
         [dataCard]="folio"
       ></app-card>
     </div>

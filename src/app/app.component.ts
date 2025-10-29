@@ -1,13 +1,9 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { CalendarioComponent } from './components/calendario/calendario.component';
 import { FoliosService } from './services/folios.service';
-import {
-  Datum,
-  Folio,
-  IFolioByDate,
-  Week,
-} from './interfaces/folios.interfaces';
+
 import { ITitleWeek } from './interfaces/calendary.interfaces';
+import { IWeek } from './interfaces/folios.interfaces';
 
 @Component({
   selector: 'app-root',
@@ -17,14 +13,7 @@ import { ITitleWeek } from './interfaces/calendary.interfaces';
 export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild(CalendarioComponent) public calendariC?: CalendarioComponent;
 
-  public titleWeek: ITitleWeek = {
-    week: '',
-    year: '',
-    month: '',
-    weekNumber: 0,
-  };
-
-  public foliosPeding = this.service.folios$;
+  public titleWeek?: ITitleWeek;
 
   constructor(public service: FoliosService) {}
 
@@ -100,51 +89,33 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   onChangeDate(date: any): void {
     this.titleWeek = date;
-    this.onGetData();
+    // this.onGetData();
+    this.onGenerate();
   }
 
-  onGetData(): void {
-    console.log('hola');
+  onGenerate(): void {
+    if (!this.titleWeek) return;
 
-    this.service
-      .getProgrammingFolio({
-        week_number: this.titleWeek.weekNumber,
-        year: this.titleWeek.year,
-      })
-      .subscribe({
-        next: (res) => {
-          console.log(res, '00');
-          console.log(this.titleWeek);
+    const { arrayOfDays } = this.titleWeek;
+    // console.log(arrayOfDays);
 
-          const { data, pending } = res;
-          const foliosByDate: IFolioByDate = {};
-          console.log(data, 'data');
-          data.forEach((program: Datum) => {
-            const { week } = program;
-            Object.values(week).forEach((dayFolios: Folio[]) => {
-              dayFolios.forEach((folio: Folio) => {
-                const fecha = folio.scheduled_payment_date
-                  ? new Date(folio.scheduled_payment_date)
-                      .toISOString()
-                      .split('T')[0]
-                  : new Date(folio.date_request).toISOString().split('T')[0];
-                if (!foliosByDate[fecha]) {
-                  foliosByDate[fecha] = {
-                    initial: 0,
-                    estimate: 0,
-                    final: 0,
-                    folios: [],
-                  };
-                }
-                foliosByDate[fecha].initial = Number(program.initial_amount);
-                foliosByDate[fecha].estimate = Number(program.final_amount);
-                foliosByDate[fecha].folios.push(folio);
-              });
-            });
-          });
-          this.service.setFoliosPending(pending);
-          this.service.setFoliosByDate(foliosByDate);
-        },
-      });
+    const weekFolios: IWeek = { week: {}, status: 'new' };
+
+    arrayOfDays.forEach((date) => {
+      const dayKey = date.toLocaleDateString('en-CA');
+
+      weekFolios.week[dayKey] = {
+        inicial: 0,
+        estimado: 0,
+        final: 0,
+        folios: [],
+      };
+    });
+
+    this.service.setFoliosByDate(weekFolios);
+    console.log(weekFolios);
+    console.log(this.service.foliosByDate, 'jejej');
   }
+
+  onTest(): void {}
 }

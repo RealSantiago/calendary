@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { Folio } from '../../interfaces/folios.interfaces';
 
 @Component({
   selector: 'app-card',
@@ -7,7 +6,7 @@ import { Folio } from '../../interfaces/folios.interfaces';
   styleUrl: './card.component.scss',
 })
 export class CardComponent {
-  @Input() public dataCard?: Folio;
+  @Input() public dataCard?: any;
 
   onDragStar(event: DragEvent): void {
     if (!this.dataCard || !event.dataTransfer) return;

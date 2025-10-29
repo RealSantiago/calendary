@@ -131,6 +131,7 @@ export class CustomDatePickerComponent implements OnInit, AfterViewInit {
     month: string;
     year: string;
     weekNumber: number;
+    arrayOfDays: Date[];
   } {
     const firstDate = this.startOfWeek;
     const lastDate = this.endOfWeek;
@@ -144,11 +145,19 @@ export class CustomDatePickerComponent implements OnInit, AfterViewInit {
     const monthText =
       firstMonth === lastMonth ? firstMonth : `${firstMonth} - ${lastMonth}`;
 
+    const arrayOfDays: Date[] = [];
+    const tempDate = new Date(firstDate);
+    while (tempDate <= lastDate) {
+      arrayOfDays.push(new Date(tempDate)); // crear una copia para no mutar la referencia
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+
     return {
       week: `${startDay} ${firstMonth} - ${endDay} ${lastMonth}`,
       month: monthText,
       year: firstDate.getFullYear().toString(),
       weekNumber: this.getISOWeekNumber(firstDate),
+      arrayOfDays,
     };
   }
 
