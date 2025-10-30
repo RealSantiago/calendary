@@ -3,7 +3,8 @@ import { CalendarioComponent } from './components/calendario/calendario.componen
 import { FoliosService } from './services/folios.service';
 
 import { ITitleWeek } from './interfaces/calendary.interfaces';
-import { IWeek } from './interfaces/folios.interfaces';
+import { IData, IFolio, IWeek } from './interfaces/folios.interfaces';
+import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 
 @Component({
   selector: 'app-root',
@@ -95,6 +96,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   onGenerate(): void {
     if (!this.titleWeek) return;
+    console.log(this.titleWeek);
 
     const { arrayOfDays } = this.titleWeek;
     // console.log(arrayOfDays);
@@ -112,10 +114,48 @@ export class AppComponent implements OnInit, AfterViewInit {
       };
     });
 
-    this.service.setFoliosByDate(weekFolios);
-    console.log(weekFolios);
-    console.log(this.service.foliosByDate, 'jejej');
+    this.service
+      .getProgrammingFolio({
+        week_number: this.titleWeek.weekNumber,
+        year: this.titleWeek.year,
+      })
+      .subscribe({
+        next: (res) => {
+          const { data } = res;
+          data.forEach((program: IData) => {
+            const { programmed } = program;
+
+            Object.values(programmed).forEach((dayFolios: IFolio[]) => {
+              dayFolios.forEach((folio: IFolio) => {
+                if (!folio.scheduled_payment_date) return;
+                const fecha = new Date(folio.scheduled_payment_date)
+                  .toISOString()
+                  .split('T')[0];
+
+                if (!weekFolios.week[fecha]) {
+                  weekFolios.week[fecha] = {
+                    inicial: 0,
+                    estimado: 0,
+                    final: 0,
+                    folios: [],
+                  };
+                }
+
+                weekFolios.week[fecha].inicial = 0;
+                weekFolios.week[fecha].estimado = 1;
+                weekFolios.week[fecha].final = 2;
+                weekFolios.week[fecha].folios.push(folio);
+              });
+            });
+          });
+          this.service.setFoliosByDate(weekFolios);
+          console.log(weekFolios);
+          // console.log(this.service.foliosByDate, 'jejej');
+        },
+      });
   }
 
-  onTest(): void {}
+  onTest(): void {
+    console.log(this.service.foliosByDate, 'test');
+  }
 }

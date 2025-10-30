@@ -33,7 +33,11 @@ export class CustomDatePickerComponent implements OnInit, AfterViewInit {
   }
   ngAfterViewInit(): void {
     Promise.resolve().then(() => {
-      this.setWeekRange(this.dateSelection);
+      // Obtener el lunes de la próxima semana
+      const nextWeekStart = new Date(this.dateSelection);
+      nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+      this.setWeekRange(nextWeekStart);
       this.weekReady = this.getDataDate();
       this.selectWeek.emit(this.weekReady);
     });
