@@ -3,8 +3,12 @@ import { CalendarioComponent } from './components/calendario/calendario.componen
 import { FoliosService } from './services/folios.service';
 
 import { ITitleWeek } from './interfaces/calendary.interfaces';
-import { IData, IFolio, IWeek } from './interfaces/folios.interfaces';
-import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
+import {
+  IData,
+  IFolio,
+  IWeek,
+  IWeekDays,
+} from './interfaces/folios.interfaces';
 
 @Component({
   selector: 'app-root',
@@ -96,22 +100,25 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   onGenerate(): void {
     if (!this.titleWeek) return;
-    console.log(this.titleWeek);
 
     const { arrayOfDays } = this.titleWeek;
-    // console.log(arrayOfDays);
+    console.log(arrayOfDays, 'days');
 
-    const weekFolios: IWeek = { week: {}, status: 'new' };
+    const previousFolios = { ...this.service.foliosByDate };
+    const weekFolios: IWeekDays = { ...previousFolios };
 
     arrayOfDays.forEach((date) => {
-      const dayKey = date.toLocaleDateString('en-CA');
+      const dayKey = date.toISOString().split('T')[0];
 
-      weekFolios.week[dayKey] = {
-        inicial: 0,
-        estimado: 0,
-        final: 0,
-        folios: [],
-      };
+      if (!weekFolios[dayKey]) {
+        weekFolios[dayKey] = {
+          inicial: 0,
+          estimado: 0,
+          final: 0,
+          folios: [],
+          status: 'in_working',
+        };
+      }
     });
 
     this.service
@@ -122,35 +129,52 @@ export class AppComponent implements OnInit, AfterViewInit {
       .subscribe({
         next: (res) => {
           const { data } = res;
+
           data.forEach((program: IData) => {
             const { programmed } = program;
 
             Object.values(programmed).forEach((dayFolios: IFolio[]) => {
               dayFolios.forEach((folio: IFolio) => {
                 if (!folio.scheduled_payment_date) return;
+
                 const fecha = new Date(folio.scheduled_payment_date)
                   .toISOString()
                   .split('T')[0];
 
-                if (!weekFolios.week[fecha]) {
-                  weekFolios.week[fecha] = {
-                    inicial: 0,
-                    estimado: 0,
-                    final: 0,
-                    folios: [],
-                  };
+                if (!weekFolios[fecha]) {
+                  // weekFolios[fecha] = {
+                  //   inicial: 0,
+                  //   estimado: 0,
+                  //   final: 0,
+                  //   folios: [],
+                  //   status: 'in_working',
+                  // };
+                  return;
                 }
 
-                weekFolios.week[fecha].inicial = 0;
-                weekFolios.week[fecha].estimado = 1;
-                weekFolios.week[fecha].final = 2;
-                weekFolios.week[fecha].folios.push(folio);
+                const dayData = weekFolios[fecha];
+
+                const alreadyExists = dayData.folios.some(
+                  (f) => f.id === folio.id
+                );
+                if (!alreadyExists) {
+                  dayData.folios.push(folio);
+                }
+
+                dayData.inicial = 0;
+                dayData.estimado = dayData.folios.reduce(
+                  (sum: number, folio: IFolio) =>
+                    sum + Number(folio.total || 0),
+                  0
+                );
+                dayData.final = 2;
+                dayData.status = program.status;
               });
             });
           });
+
           this.service.setFoliosByDate(weekFolios);
-          console.log(weekFolios);
-          // console.log(this.service.foliosByDate, 'jejej');
+          console.log('Datos actualizados:', weekFolios);
         },
       });
   }
@@ -158,4 +182,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   onTest(): void {
     console.log(this.service.foliosByDate, 'test');
   }
+
+  onFoliosPending(): void {}
 }

@@ -45,7 +45,7 @@ export class FoliosService {
       }
     });
 
-    const token: string = '2642|7lMGTlAq7Bi6F67yeFyzwBEnudISRmd06evoweB4';
+    const token: string = '2667|PHzOUfLI1ltLXCCv7YRvSpB8ZJYhz7SKj67UFzOq';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
@@ -55,4 +55,6 @@ export class FoliosService {
       params: paramsQ,
     });
   }
+
+  getFoliosPending(): void {}
 }

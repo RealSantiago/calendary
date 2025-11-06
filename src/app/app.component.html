@@ -4,7 +4,9 @@
     <div class="sub-container">
       <span>
         Semana de Gasto
+        {{ titleWeek?.weekNumber }}
         <strong>{{ titleWeek?.month | titlecase }}</strong>
+        {{ titleWeek?.year }}
       </span>
     </div>
 
@@ -18,7 +20,7 @@
 
     <div class="sub-container">
       <div class="actions">
-        <button>Borrados</button>
+        <button (click)="onTest()">Borrados</button>
         <button>Completado</button>
       </div>
     </div>
@@ -42,7 +44,7 @@
           display: flex;
           flex-direction: column;
         "
-        [dataSelection]="titleWeek"
+        [titleWeek]="titleWeek"
       ></app-calendario>
     </div>
   </div>

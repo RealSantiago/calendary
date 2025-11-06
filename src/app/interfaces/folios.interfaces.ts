@@ -12,6 +12,7 @@ export interface IWeekDayDetails {
   estimado: number;
   final: number;
   folios: any[];
+  status: 'new' | 'in_working' | 'confirmed';
 }
 
 // ---- DATA QUE RECIBO DE LA API
@@ -31,7 +32,7 @@ export interface IData {
   confirmed_by: null;
   initial_amount: string;
   final_amount: string;
-  status: string;
+  status: 'new' | 'in_working' | 'confirmed';
   created_at: Date;
   updated_at: Date;
   deleted_at: null;

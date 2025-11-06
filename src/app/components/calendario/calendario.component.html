@@ -3,7 +3,7 @@
   <div class="days-header">
     <ng-container *ngFor="let day of daysShows; let i = index">
       <div class="container-head">
-        <p>Inicial: {{ day.initial | currency }}</p>
+        <p>Inicial: {{ day.inicial | currency }}</p>
         <p>Estimado: {{ day.estimate | currency }}</p>
         <p>Confirmado: {{ day.final | currency }}</p>
         <div class="day-container">{{ daysOfWeek[i] }}</div>
@@ -20,9 +20,9 @@
     >
       <!-- CABECERA DEL DÍA -->
       <div class="day-header">
-        <span>{{ day.fecha.getDate() }}</span>
+        <span>{{ day.day.getDate() }}</span>
         <div style="flex: 1 1 auto"></div>
-        <span>{{ day.final | currency }}</span>
+        <span>{{ day.estimate | currency }}</span>
       </div>
 
       <!-- LISTA DE FOLIOS -->
@@ -50,6 +50,6 @@
     >
       <mat-icon fontIcon="close"></mat-icon>
     </button>
-    <span>{{ daySelect.fecha | date : "mediumDate" }}</span>
+    <span>{{ daySelect.day | date : "longDate" }}</span>
   </div>
 </div>
