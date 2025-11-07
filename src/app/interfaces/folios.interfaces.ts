@@ -8,11 +8,16 @@ export interface IWeekDays {
 }
 
 export interface IWeekDayDetails {
+  day?: string;
   inicial: number;
   estimado: number;
-  final: number;
+  confirmado: number;
+  finalEstimado: number;
+  finalReal: number;
+  totalDay: number;
   folios: any[];
-  status: 'new' | 'in_working' | 'confirmed';
+  idWeek: number | undefined;
+  status: 'new' | 'in_working' | 'confirmed' | undefined;
 }
 
 // ---- DATA QUE RECIBO DE LA API

@@ -1,7 +1,11 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { IRequest } from '../interfaces/folios.interfaces';
+import { BehaviorSubject, map, Observable } from 'rxjs';
+import {
+  IRequest,
+  IWeekDayDetails,
+  IWeekDays,
+} from '../interfaces/folios.interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +16,7 @@ export class FoliosService {
   private _folios$ = new BehaviorSubject<any[]>([]);
   public folios$ = this._folios$.asObservable();
 
-  private _foliosByDate$ = new BehaviorSubject<any>({});
+  private _foliosByDate$ = new BehaviorSubject<IWeekDays>({});
   public foliosByDate$ = this._foliosByDate$.asObservable();
 
   setFoliosPending(folios: any[]): void {

@@ -65,5 +65,6 @@ export class CalendarioComponent implements OnInit {
 
   onSelectDay(day: any): void {
     this.daySelect = day;
+    console.log(day);
   }
 }

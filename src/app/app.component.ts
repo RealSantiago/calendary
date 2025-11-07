@@ -22,40 +22,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   constructor(public service: FoliosService) {}
 
-  ngOnInit(): void {
-    // this.service.getProgrammingFolio({week_number:}).subscribe({
-    //   next: (res) => {
-    //     const { data, pending } = res;
-    //     const foliosByDate: IFolioByDate = {};
-    //     console.log(data, 'data');
-    //     data.forEach((program: Datum) => {
-    //       const { week } = program;
-    //       Object.values(week).forEach((dayFolios: Folio[]) => {
-    //         dayFolios.forEach((folio: Folio) => {
-    //           const fecha = folio.scheduled_payment_date
-    //             ? new Date(folio.scheduled_payment_date)
-    //                 .toISOString()
-    //                 .split('T')[0]
-    //             : new Date(folio.date_request).toISOString().split('T')[0];
-    //           if (!foliosByDate[fecha]) {
-    //             foliosByDate[fecha] = {
-    //               initial: 0,
-    //               estimate: 0,
-    //               final: 0,
-    //               folios: [],
-    //             };
-    //           }
-    //           foliosByDate[fecha].initial = Number(program.initial_amount);
-    //           foliosByDate[fecha].estimate = Number(program.final_amount);
-    //           foliosByDate[fecha].folios.push(folio);
-    //         });
-    //       });
-    //     });
-    //     this.service.setFoliosPending(pending);
-    //     this.service.setFoliosByDate(foliosByDate);
-    //   },
-    // });
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
     const resizer = document.querySelector('.resizer') as HTMLElement;
@@ -112,11 +79,16 @@ export class AppComponent implements OnInit, AfterViewInit {
 
       if (!weekFolios[dayKey]) {
         weekFolios[dayKey] = {
+          day: dayKey,
           inicial: 0,
           estimado: 0,
-          final: 0,
+          confirmado: 0,
+          finalEstimado: 0,
+          finalReal: 0,
+          totalDay: 0,
           folios: [],
-          status: 'in_working',
+          idWeek: undefined,
+          status: undefined,
         };
       }
     });
@@ -141,18 +113,10 @@ export class AppComponent implements OnInit, AfterViewInit {
                   .toISOString()
                   .split('T')[0];
 
-                if (!weekFolios[fecha]) {
-                  // weekFolios[fecha] = {
-                  //   inicial: 0,
-                  //   estimado: 0,
-                  //   final: 0,
-                  //   folios: [],
-                  //   status: 'in_working',
-                  // };
-                  return;
-                }
-
                 const dayData = weekFolios[fecha];
+                console.log(dayData);
+
+                if (!dayData) return;
 
                 const alreadyExists = dayData.folios.some(
                   (f) => f.id === folio.id
@@ -162,12 +126,11 @@ export class AppComponent implements OnInit, AfterViewInit {
                 }
 
                 dayData.inicial = 0;
-                dayData.estimado = dayData.folios.reduce(
+                dayData.totalDay = dayData.folios.reduce(
                   (sum: number, folio: IFolio) =>
                     sum + Number(folio.total || 0),
                   0
                 );
-                dayData.final = 2;
                 dayData.status = program.status;
               });
             });
@@ -175,6 +138,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
           this.service.setFoliosByDate(weekFolios);
           console.log('Datos actualizados:', weekFolios);
+        },
+        error: (err) => {
+          this.service.setFoliosByDate(weekFolios);
         },
       });
   }

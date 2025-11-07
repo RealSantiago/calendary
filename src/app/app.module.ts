@@ -23,10 +23,11 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { AnalyticComponent } from './components/analytic/analytic.component';
 import { TransformDataPipe } from './pipes/transform-data.pipe';
 
-import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 
-registerLocaleData(localeEs, 'es-MX');
+import localeEsMx from '@angular/common/locales/es-MX';
+registerLocaleData(localeEsMx, 'es-MX');
+
 @NgModule({
   declarations: [
     AppComponent,
