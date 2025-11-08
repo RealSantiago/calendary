@@ -58,91 +58,22 @@ export class AppComponent implements OnInit, AfterViewInit {
       window.addEventListener('mouseup', onMouseUp);
     });
   }
-
-  onChangeDate(date: any): void {
+  onChangeDate(date: ITitleWeek): void {
     this.titleWeek = date;
-    // this.onGetData();
     this.onGenerate();
   }
 
   onGenerate(): void {
     if (!this.titleWeek) return;
 
-    const { arrayOfDays } = this.titleWeek;
-    console.log(arrayOfDays, 'days');
-
-    const previousFolios = { ...this.service.foliosByDate };
-    const weekFolios: IWeekDays = { ...previousFolios };
-
-    arrayOfDays.forEach((date) => {
-      const dayKey = date.toISOString().split('T')[0];
-
-      if (!weekFolios[dayKey]) {
-        weekFolios[dayKey] = {
-          day: dayKey,
-          inicial: 0,
-          estimado: 0,
-          confirmado: 0,
-          finalEstimado: 0,
-          finalReal: 0,
-          totalDay: 0,
-          folios: [],
-          idWeek: undefined,
-          status: undefined,
-        };
-      }
+    this.service.getAndTransformFoliosByWeek(this.titleWeek).subscribe({
+      next: (weekFolios) => {
+        console.log('Datos actualizados:', weekFolios);
+      },
+      error: (err) => {
+        console.error('Error al obtener folios:', err);
+      },
     });
-
-    this.service
-      .getProgrammingFolio({
-        week_number: this.titleWeek.weekNumber,
-        year: this.titleWeek.year,
-      })
-      .subscribe({
-        next: (res) => {
-          const { data } = res;
-
-          data.forEach((program: IData) => {
-            const { programmed } = program;
-
-            Object.values(programmed).forEach((dayFolios: IFolio[]) => {
-              dayFolios.forEach((folio: IFolio) => {
-                if (!folio.scheduled_payment_date) return;
-
-                const fecha = new Date(folio.scheduled_payment_date)
-                  .toISOString()
-                  .split('T')[0];
-
-                const dayData = weekFolios[fecha];
-                console.log(dayData);
-
-                if (!dayData) return;
-
-                const alreadyExists = dayData.folios.some(
-                  (f) => f.id === folio.id
-                );
-                if (!alreadyExists) {
-                  dayData.folios.push(folio);
-                }
-
-                dayData.inicial = 0;
-                dayData.totalDay = dayData.folios.reduce(
-                  (sum: number, folio: IFolio) =>
-                    sum + Number(folio.total || 0),
-                  0
-                );
-                dayData.status = program.status;
-              });
-            });
-          });
-
-          this.service.setFoliosByDate(weekFolios);
-          console.log('Datos actualizados:', weekFolios);
-        },
-        error: (err) => {
-          this.service.setFoliosByDate(weekFolios);
-        },
-      });
   }
 
   onTest(): void {

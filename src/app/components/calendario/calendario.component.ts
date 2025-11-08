@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { IDaysWeek, ITitleWeek } from '../../interfaces/calendary.interfaces';
 import { FoliosService } from '../../services/folios.service';
+import { IWeekDayDetails } from '../../interfaces/folios.interfaces';
 
 @Component({
   selector: 'app-calendario',
@@ -44,23 +45,26 @@ export class CalendarioComponent implements OnInit {
     this.daysShows = [];
     if (!this.titleWeek) return;
     const data = { ...this.service.foliosByDate };
-
     const { arrayOfDays } = this.titleWeek;
+
     arrayOfDays.forEach((day) => {
       const dayTransform = day.toISOString().split('T')[0];
-
-      const folios = data[dayTransform].folios;
+      const dayKey: IWeekDayDetails = data[dayTransform];
 
       const dayCreate: IDaysWeek = {
         day: day,
-        folios: folios,
-        inicial: data[dayTransform].inicial,
-        estimate: data[dayTransform].estimado,
-        final: data[dayTransform].final,
-        status: 'new',
+        inicial: dayKey.inicial,
+        estimate: dayKey.estimado,
+        confirmado: dayKey.confirmado,
+        finalEstimado: dayKey.finalEstimado,
+        finalReal: dayKey.finalReal,
+        status: dayKey.status,
+        folios: dayKey.folios,
       };
       this.daysShows.push(dayCreate);
     });
+
+    console.log(this.daysShows, 'diasmostrados');
   }
 
   onSelectDay(day: any): void {

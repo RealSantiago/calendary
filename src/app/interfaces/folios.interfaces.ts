@@ -8,7 +8,7 @@ export interface IWeekDays {
 }
 
 export interface IWeekDayDetails {
-  day?: string;
+  day: string;
   inicial: number;
   estimado: number;
   confirmado: number;

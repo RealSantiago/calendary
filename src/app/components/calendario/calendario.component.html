@@ -5,7 +5,9 @@
       <div class="container-head">
         <p>Inicial: {{ day.inicial | currency }}</p>
         <p>Estimado: {{ day.estimate | currency }}</p>
-        <p>Confirmado: {{ day.final | currency }}</p>
+        <p>Confirmado: {{ day.confirmado | currency }}</p>
+        <p>Final Estimado: {{ day.finalEstimado | currency }}</p>
+        <p>Final Real: {{ day.finalReal | currency }}</p>
         <div class="day-container">{{ daysOfWeek[i] }}</div>
       </div>
     </ng-container>

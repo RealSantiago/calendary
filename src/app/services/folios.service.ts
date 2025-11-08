@@ -1,11 +1,13 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
 import {
   IRequest,
   IWeekDayDetails,
   IWeekDays,
+  Programmed,
 } from '../interfaces/folios.interfaces';
+import { ITitleWeek } from '../interfaces/calendary.interfaces';
 
 @Injectable({
   providedIn: 'root',
@@ -13,9 +15,11 @@ import {
 export class FoliosService {
   constructor(private http: HttpClient) {}
 
+  // FOLIOS PENDIENTES
   private _folios$ = new BehaviorSubject<any[]>([]);
   public folios$ = this._folios$.asObservable();
 
+  // FOLIOS CON FECHA DE SEMANA
   private _foliosByDate$ = new BehaviorSubject<IWeekDays>({});
   public foliosByDate$ = this._foliosByDate$.asObservable();
 
@@ -23,7 +27,7 @@ export class FoliosService {
     this._folios$.next([...folios]);
   }
 
-  setFoliosByDate(folios: any): void {
+  setFoliosByDate(folios: IWeekDays): void {
     this._foliosByDate$.next({ ...folios });
   }
 
@@ -31,6 +35,76 @@ export class FoliosService {
     return this._foliosByDate$.getValue();
   }
 
+  getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
+    if (!titleWeek) throw new Error('titleWeek es requerido');
+
+    const { arrayOfDays, weekNumber, year } = titleWeek;
+
+    // Inicializa estructura base vacía
+    const weekFolios: IWeekDays = {};
+
+    arrayOfDays.forEach((date) => {
+      const dayKey = date.toISOString().split('T')[0];
+      weekFolios[dayKey] = {
+        day: dayKey,
+        inicial: 0,
+        estimado: 0,
+        confirmado: 0,
+        finalEstimado: 0,
+        finalReal: 0,
+        totalDay: 0,
+        folios: [],
+        idWeek: undefined,
+        status: undefined,
+      };
+    });
+
+    return this.getProgrammingFolio({ week_number: weekNumber, year }).pipe(
+      map((res) => {
+        const { data } = res;
+
+        data.forEach((program) => {
+          const { programmed } = program;
+
+          Object.values(programmed).forEach((dayFolios) => {
+            dayFolios.forEach((folio) => {
+              if (!folio.scheduled_payment_date) return;
+
+              const fecha = new Date(folio.scheduled_payment_date)
+                .toISOString()
+                .split('T')[0];
+
+              const dayData = weekFolios[fecha];
+              if (!dayData) return;
+
+              const alreadyExists = dayData.folios.some(
+                (f) => f.id === folio.id
+              );
+              if (!alreadyExists) {
+                dayData.folios.push(folio);
+              }
+
+              dayData.totalDay = dayData.folios.reduce(
+                (sum, f) => sum + Number(f.total || 0),
+                0
+              );
+              dayData.status = program.status;
+            });
+          });
+        });
+
+        this.setFoliosByDate(weekFolios);
+        return weekFolios;
+      }),
+      catchError((error) => {
+        console.error('Error al obtener folios:', error);
+
+        // Mantén estructura vacía, evita que la app falle
+        this.setFoliosByDate(weekFolios);
+        return of(weekFolios);
+      })
+    );
+  }
   // ENDPOINTS
 
   getProgrammingFolio(dataParams: {
