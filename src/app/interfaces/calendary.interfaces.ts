@@ -14,6 +14,9 @@ export interface IDaysWeek {
   confirmado: number;
   finalEstimado: number;
   finalReal: number;
+  finalDia: number;
+  idWeek: number | undefined;
   folios: any[];
   status: 'new' | 'in_working' | 'confirmed' | undefined;
+  selection: string;
 }

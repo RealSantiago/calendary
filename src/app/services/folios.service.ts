@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
 import {
+  IFolio,
   IRequest,
   IWeekDayDetails,
   IWeekDays,
@@ -35,6 +36,81 @@ export class FoliosService {
     return this._foliosByDate$.getValue();
   }
 
+  // RETRNA TODOS LOS DEPARTAMENTOS QUE TIENE FOLIOS PENDIENTES
+  get departamentsPending(): string[] {
+    const foliosPending = [...this._folios$.value];
+    const uniqDepartaments = new Set(
+      foliosPending.map((f: IFolio) => f.department).filter((d) => d != null)
+    );
+    const result = Array.from(uniqDepartaments);
+    result.unshift('Todos');
+    return result;
+  }
+
+  // **************************************************
+
+  onMoveToDate(folio: IFolio, toDate: Date): void {
+    const to = toDate.toISOString().split('T')[0];
+    const folioByDate = { ...this._foliosByDate$.value };
+    let foliosPending = [...this._folios$.value];
+
+    foliosPending = foliosPending.filter((f: IFolio) => f.id !== folio.id);
+    folioByDate[to].folios.push(folio);
+    folioByDate[to].totalDay = folioByDate[to].folios.reduce(
+      (sum: number, folio: IFolio) => sum + Number(folio.total || 0),
+      0
+    );
+
+    console.log({ folio, toDate }, '0000');
+    this._folios$.next(foliosPending);
+    this._foliosByDate$.next(folioByDate);
+  }
+
+  onMoveBetweenDays(folio: IFolio, fromDate: string, toDate: Date): void {
+    // console.log({ folio, fromDate, toDate });
+    const foliosByDate = { ...this._foliosByDate$.value };
+    const from = new Date(fromDate).toISOString().split('T')[0];
+    const to = toDate.toISOString().split('T')[0];
+    console.log({ folio, from, to });
+
+    // MOVEMOS DE DONDE VIENE
+    foliosByDate[from].folios = foliosByDate[from].folios.filter(
+      (f: IFolio) => f.id !== folio.id
+    );
+    foliosByDate[from].totalDay = foliosByDate[from].folios.reduce(
+      (suma: number, folio: IFolio) => suma + Number(folio.total || 0),
+      0
+    );
+
+    //AGREGAMOS EL FOLIO AL NUEVO DESTINO
+    foliosByDate[to].folios.push(folio);
+    foliosByDate[to].totalDay = foliosByDate[to].folios.reduce(
+      (suma: number, folio: IFolio) => suma + Number(folio.total || 0),
+      0
+    );
+
+    // ACTUALIZAMOS
+    this._foliosByDate$.next(foliosByDate);
+  }
+
+  // * REMOVER UN FOLIO DE LAS FECHAS Y PASARLO A PENDIENTE
+
+  onRemove(folio: IFolio, dateKey: Date): void {
+    const foliosByDate = { ...this._foliosByDate$.value };
+    const foliosPending = [...this._folios$.value];
+    const date = dateKey.toISOString().split('T')[0];
+    foliosByDate[date].folios = foliosByDate[date].folios.filter(
+      (f: IFolio) => f.id !== folio.id
+    );
+    foliosByDate[date].totalDay = foliosByDate[date].folios.reduce(
+      (suma: number, folio: IFolio) => suma + Number(folio.total || 0),
+      0
+    );
+    foliosPending.push(folio);
+    this._foliosByDate$.next(foliosByDate);
+    this._folios$.next(foliosPending);
+  }
+
   getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
     if (!titleWeek) throw new Error('titleWeek es requerido');
 
@@ -66,7 +142,13 @@ export class FoliosService {
         data.forEach((program) => {
           const { programmed } = program;
 
+          Object.keys(weekFolios).forEach((key) => {
+            weekFolios[key].idWeek = program.id;
+            weekFolios[key].status = program.status;
+          });
+
           Object.values(programmed).forEach((dayFolios) => {
+            // RECORREMOS CADA FOLIO
             dayFolios.forEach((folio) => {
               if (!folio.scheduled_payment_date) return;
 
@@ -88,7 +170,6 @@ export class FoliosService {
                 (sum, f) => sum + Number(f.total || 0),
                 0
               );
-              dayData.status = program.status;
             });
           });
         });
@@ -123,7 +204,7 @@ export class FoliosService {
       }
     });
 
-    const token: string = '2667|PHzOUfLI1ltLXCCv7YRvSpB8ZJYhz7SKj67UFzOq';
+    const token: string = '9933|UJtIApJbd3bTXjghrgPiSaGDlcLIQDvpeyxO0kTF';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });

@@ -3,12 +3,57 @@
   <div class="days-header">
     <ng-container *ngFor="let day of daysShows; let i = index">
       <div class="container-head">
-        <p>Inicial: {{ day.inicial | currency }}</p>
-        <p>Estimado: {{ day.estimate | currency }}</p>
-        <p>Confirmado: {{ day.confirmado | currency }}</p>
-        <p>Final Estimado: {{ day.finalEstimado | currency }}</p>
-        <p>Final Real: {{ day.finalReal | currency }}</p>
-        <div class="day-container">{{ daysOfWeek[i] }}</div>
+        <div class="stats-group">
+          <div class="stat-item">
+            <span class="stat-label">Inicial</span>
+            <span class="stat-value">{{ day.inicial | currency }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Estimado</span>
+            <!-- <span class="stat-value accent">{{ day.estimate | currency }}</span> -->
+            <input
+              type="number"
+              style="width: 100%"
+              [value]="day.estimate"
+              (keyup.enter)="onAddValue($event, 'estimate')"
+              min="0"
+            />
+          </div>
+        </div>
+
+        <div class="stats-group">
+          <div class="stat-item">
+            <span class="stat-label">Confirmado</span>
+            <!-- <span class="stat-value">{{ day.confirmado | currency }}</span> -->
+            <input
+              type="number"
+              style="width: 100%"
+              [value]="day.confirmado"
+              (change)="onAddValue($event, 'confirmado')"
+              min="0"
+            />
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Final Est.</span>
+            <span class="stat-value">{{ day.finalEstimado | currency }}</span>
+          </div>
+        </div>
+        <div class="final-stat">
+          <span class="stat-label">Final Real</span>
+          <span class="stat-value final">{{ day.finalReal | currency }}</span>
+        </div>
+        <div class="day-container">
+          <span class="day-name">{{ daysOfWeek[i] }}</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="department-select">
+          <mat-label>Departamento</mat-label>
+          <mat-select [value]="day.selection">
+            @for (food of onGetDepartaments(day.folios); track food) {
+            <mat-option [value]="food">{{ food }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
     </ng-container>
   </div>
@@ -18,40 +63,45 @@
     <div
       class="day-cell"
       *ngFor="let day of daysShows"
-      (click)="onSelectDay(day)"
+      (click)="onSelectDay(day, $event)"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event, day.day)"
     >
       <!-- CABECERA DEL DÍA -->
       <div class="day-header">
-        <span>{{ day.day.getDate() }}</span>
-        <div style="flex: 1 1 auto"></div>
-        <span>{{ day.estimate | currency }}</span>
-      </div>
-
-      <!-- LISTA DE FOLIOS -->
-      <div class="folio" *ngFor="let folio of day.folios" draggable="true">
-        <div class="folio-content">
-          <span class="folio-text">
-            {{ folio.folio }} - {{ folio.departament }} -
-            {{ folio.total | currency }}
-          </span>
-          <button mat-icon-button>
-            <mat-icon>favorite</mat-icon>
-          </button>
+        <div class="day-date">
+          <span class="date-number">{{ day.day.getDate() }}</span>
+        </div>
+        <div class="day-estimate">
+          <span class="estimate-label">Total en el dia</span>
+          <span class="estimate-value">{{ day.finalDia | currency }}</span>
         </div>
       </div>
+
+      <!-- DIVIDER -->
+      <div class="header-divider"></div>
+
+      <!-- LISTA DE CARDS -->
+      <div class="folio-list">
+        <app-card
+          *ngFor="let folio of day.folios"
+          [status]="day.status"
+          [dataCard]="folio"
+          [fromDate]="day.day"
+          [onAction]="onRemove.bind(this, folio, day.day)"
+        ></app-card>
+      </div>
     </div>
-    <!-- <app-analytic></app-analytic> -->
   </div>
 
   <!-- MENSAJE SI SELECCIONA UN DÍA -->
   <div class="empty" *ngIf="daySelect">
-    <button
-      (click)="daySelect = undefined"
-      mat-icon-button
-      style="position: absolute; right: 10px"
-    >
+    <button (click)="daySelect = undefined" mat-icon-button class="close-btn">
       <mat-icon fontIcon="close"></mat-icon>
     </button>
-    <span>{{ daySelect.day | date : "longDate" }}</span>
+    <div class="empty-content">
+      <mat-icon class="empty-icon">calendar_today</mat-icon>
+      <span class="empty-date">{{ daySelect.day | date : "longDate" }}</span>
+    </div>
   </div>
 </div>

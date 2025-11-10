@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { IDaysWeek, ITitleWeek } from '../../interfaces/calendary.interfaces';
 import { FoliosService } from '../../services/folios.service';
-import { IWeekDayDetails } from '../../interfaces/folios.interfaces';
+import { IFolio, IWeekDayDetails } from '../../interfaces/folios.interfaces';
 
 @Component({
   selector: 'app-calendario',
@@ -60,6 +60,9 @@ export class CalendarioComponent implements OnInit {
         finalReal: dayKey.finalReal,
         status: dayKey.status,
         folios: dayKey.folios,
+        selection: 'Todos',
+        idWeek: dayKey.idWeek,
+        finalDia: dayKey.totalDay,
       };
       this.daysShows.push(dayCreate);
     });
@@ -67,8 +70,51 @@ export class CalendarioComponent implements OnInit {
     console.log(this.daysShows, 'diasmostrados');
   }
 
-  onSelectDay(day: any): void {
+  onSelectDay(day: any, event: Event): void {
+    event.preventDefault();
     this.daySelect = day;
     console.log(day);
   }
+
+  // AGREGAR ESTIMADO O CONFIRMADO
+  // En tu componente .ts
+  onAddValue(event: Event, property: string): void {
+    const input = event.target as HTMLInputElement;
+    let value = Number(input.value);
+    input.value = value.toString();
+    console.log(Number(value));
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault(); // necesario para permitir el drop
+    event.dataTransfer!.dropEffect = 'move';
+  }
+
+  onDrop(event: DragEvent, toDate: Date): void {
+    event.preventDefault();
+    const data = event.dataTransfer?.getData('text/plain');
+    if (!data) return;
+    const { folio, fromDate } = JSON.parse(data);
+    console.log({ folio, fromDate });
+    // console.log({ toDate });
+    if (!fromDate) {
+      this.service.onMoveToDate(folio, toDate);
+      return;
+    }
+    this.service.onMoveBetweenDays(folio, fromDate, toDate);
+  }
+
+  onGetDepartaments(folios: IFolio[]): any {
+    const uniqDepartament = new Set(
+      folios.map((folio) => folio.department).filter((d) => d != null)
+    );
+    const result = Array.from(uniqDepartament);
+    result.unshift('Todos');
+    return result;
+  }
+
+  onRemove = (folio: IFolio, dateKey: any) => {
+    return this.service.onRemove(folio, dateKey);
+  };
+  //
 }

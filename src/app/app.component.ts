@@ -19,44 +19,40 @@ export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild(CalendarioComponent) public calendariC?: CalendarioComponent;
 
   public titleWeek?: ITitleWeek;
+  public departaments: string[] = [];
 
   constructor(public service: FoliosService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.departaments = [...this.service.departamentsPending];
+  }
 
   ngAfterViewInit() {
-    const resizer = document.querySelector('.resizer') as HTMLElement;
-    const bottom = document.querySelector('.bottom-section') as HTMLElement;
-    const container = document.querySelector('.container') as HTMLElement;
-
-    let startY: number;
-    let startHeight: number;
-
-    resizer.addEventListener('mousedown', (e: MouseEvent) => {
-      e.preventDefault(); // evita selección de texto al arrastrar
-      startY = e.clientY;
-      startHeight = bottom.offsetHeight;
-
-      const onMouseMove = (event: MouseEvent) => {
-        const dy = startY - event.clientY;
-        const newHeight = startHeight + dy;
-
-        const minHeight = 150; // mínimo visible
-        const maxHeight = container.offsetHeight - 150; // límite superior
-
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-          bottom.style.height = `${newHeight}px`;
-        }
-      };
-
-      const onMouseUp = () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-      };
-
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    });
+    // const resizer = document.querySelector('.resizer') as HTMLElement;
+    // const bottom = document.querySelector('.bottom-section') as HTMLElement;
+    // const container = document.querySelector('.container') as HTMLElement;
+    // let startY: number;
+    // let startHeight: number;
+    // resizer.addEventListener('mousedown', (e: MouseEvent) => {
+    //   e.preventDefault(); // evita selección de texto al arrastrar
+    //   startY = e.clientY;
+    //   startHeight = bottom.offsetHeight;
+    //   const onMouseMove = (event: MouseEvent) => {
+    //     const dy = startY - event.clientY;
+    //     const newHeight = startHeight + dy;
+    //     const minHeight = 150; // mínimo visible
+    //     const maxHeight = container.offsetHeight - 150; // límite superior
+    //     if (newHeight >= minHeight && newHeight <= maxHeight) {
+    //       bottom.style.height = `${newHeight}px`;
+    //     }
+    //   };
+    //   const onMouseUp = () => {
+    //     window.removeEventListener('mousemove', onMouseMove);
+    //     window.removeEventListener('mouseup', onMouseUp);
+    //   };
+    //   window.addEventListener('mousemove', onMouseMove);
+    //   window.addEventListener('mouseup', onMouseUp);
+    // });
   }
   onChangeDate(date: ITitleWeek): void {
     this.titleWeek = date;

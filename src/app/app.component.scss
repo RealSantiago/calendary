@@ -62,6 +62,8 @@
   flex-direction: column;
   row-gap: 10px;
   border-right: 1px solid #ddd;
+  overflow-y: auto; // Scroll vertical
+  overflow-x: hidden; // Sin scroll horizontal
 }
 
 .center {

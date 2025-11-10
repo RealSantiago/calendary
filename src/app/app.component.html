@@ -29,6 +29,14 @@
   <!-- CONTENIDO PRINCIPAL -->
   <div class="content main-content">
     <div class="left">
+      <mat-form-field appearance="outline">
+        <mat-label>Departamento</mat-label>
+        <mat-select>
+          @for (departament of service.departamentsPending; track departament) {
+          <mat-option [value]="departament">{{ departament }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
       <app-card
         *ngFor="let folio of service.folios$ | async"
         [dataCard]="folio"
@@ -50,13 +58,13 @@
   </div>
 
   <!-- DIVISOR MORADO -->
-  <div class="resizer"></div>
+  <!-- <div class="resizer"></div> -->
 
   <!-- SECCIÓN INFERIOR -->
-  <div class="bottom-section">
+  <!-- <div class="bottom-section">
     <div class="left"></div>
     <div class="center">
       <p>Resumen o detalles de la semana</p>
     </div>
-  </div>
+  </div> -->
 </div>

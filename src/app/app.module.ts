@@ -22,7 +22,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialogModule } from '@angular/material/dialog';
 import { AnalyticComponent } from './components/analytic/analytic.component';
 import { TransformDataPipe } from './pipes/transform-data.pipe';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { registerLocaleData } from '@angular/common';
 
 import localeEsMx from '@angular/common/locales/es-MX';
@@ -52,6 +52,7 @@ registerLocaleData(localeEsMx, 'es-MX');
     ReactiveFormsModule,
     MatDialogModule,
     MatExpansionModule,
+    MatTooltipModule,
   ],
   providers: [
     provideAnimationsAsync(),

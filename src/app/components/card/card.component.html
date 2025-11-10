@@ -1,14 +1,72 @@
-<div class="container" *ngIf="dataCard">
-  <div class="content">
-    <span>{{ (dataCard.department | titlecase) || "No definido" }}</span>
-    <div>{{ dataCard.item_list | transformData }}</div>
-    <div>{{ (dataCard.destiny_paying | titlecase) || "No definido" }}</div>
+<div
+  class="card-container"
+  [draggable]="status !== 'in_working'"
+  (dragstart)="onDragStar($event)"
+  *ngIf="dataCard"
+>
+  <div class="card-left-accent"></div>
+
+  <!-- SECCIÓN DE ARRIBA (Contenido + Info) -->
+  <div class="top-section">
+    <div class="content">
+      <div class="content-main">
+        <span class="department">{{
+          (dataCard.department | titlecase) || "No definido"
+        }}</span>
+        <div
+          class="description"
+          [matTooltip]="dataCard.item_list | transformData"
+        >
+          {{ dataCard.item_list | transformData }}
+        </div>
+        <div class="destiny">
+          {{ (dataCard.destiny_paying | titlecase) || "No definido" }}
+        </div>
+      </div>
+    </div>
+
+    <div class="price">
+      <div class="price-row">
+        <div class="price-item">
+          <span class="price-label">ID</span>
+          <span class="price-id">{{ dataCard.id }}</span>
+        </div>
+        <div class="price-item">
+          <span class="price-label">Folio</span>
+          <span class="price-folio">{{ dataCard.folio || "Sin folio" }}</span>
+        </div>
+      </div>
+      <div class="dates-row">
+        <div class="date-item">
+          <span class="date-label">Fecha Pago</span>
+          <span class="date-value">{{
+            dataCard.scheduled_payment_date | date : "mediumDate"
+          }}</span>
+        </div>
+        <div class="date-item">
+          <span class="date-label">Fecha Programado</span>
+          <span class="date-value">{{
+            dataCard.scheduled_payment_date | date : "mediumDate"
+          }}</span>
+        </div>
+      </div>
+      <div class="price-item total">
+        <span class="price-label">Total</span>
+        <span class="price-total">{{ dataCard.total | currency }}</span>
+      </div>
+    </div>
   </div>
-  <div class="price">
-    <span style="font-size: 12px; text-align: right"
-      >ID: {{ dataCard.id }}</span
+
+  <!-- BOTÓN ABAJO -->
+  <div class="actions">
+    <button
+      class="delete-btn"
+      title="Eliminar"
+      (click)="onDelete($event)"
+      *ngIf="onAction"
     >
-    <div>{{ dataCard.total | currency }}</div>
-    <div>{{ dataCard.folio || "Sin folio" }}</div>
+      <mat-icon>delete_outline</mat-icon>
+      Eliminar
+    </button>
   </div>
 </div>

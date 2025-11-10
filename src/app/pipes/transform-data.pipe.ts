@@ -4,11 +4,15 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'transformData',
 })
 export class TransformDataPipe implements PipeTransform {
-  transform(value: string, ...args: unknown[]): string {
-    const res: any[] = JSON.parse(value);
+  transform(value: string | any[]): string {
+    // console.log('pipe', value);
 
-    if (res.length === 0) return 'No hay concepto';
+    if (typeof value === 'string') {
+      const res: any[] = JSON.parse(value);
+      if (res.length === 0) return 'No hay concepto';
+      return res[0].concepto;
+    }
 
-    return res[0].concepto;
+    return value[0].concepto;
   }
 }
