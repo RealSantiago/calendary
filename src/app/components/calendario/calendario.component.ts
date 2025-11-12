@@ -44,30 +44,50 @@ export class CalendarioComponent implements OnInit {
   onUpdateWeek(): void {
     this.daysShows = [];
     if (!this.titleWeek) return;
+
     const data = { ...this.service.foliosByDate };
     const { arrayOfDays } = this.titleWeek;
 
     arrayOfDays.forEach((day) => {
       const dayTransform = day.toISOString().split('T')[0];
-      const dayKey: IWeekDayDetails = data[dayTransform];
+      const dayKey: IWeekDayDetails | undefined = data[dayTransform];
+
+      // ⚠️ Si no hay información del día, creamos un objeto vacío
+      if (!dayKey) {
+        this.daysShows.push({
+          day,
+          inicial: 0,
+          estimate: 0,
+          confirmado: 0,
+          finalEstimado: 0,
+          finalReal: 0,
+          status: undefined,
+          folios: [],
+          selection: 'Todos',
+          idWeek: undefined,
+          finalDia: 0,
+        });
+        return; // pasa al siguiente día
+      }
 
       const dayCreate: IDaysWeek = {
-        day: day,
-        inicial: dayKey.inicial,
-        estimate: dayKey.estimado,
-        confirmado: dayKey.confirmado,
-        finalEstimado: dayKey.finalEstimado,
-        finalReal: dayKey.finalReal,
+        day,
+        inicial: dayKey.inicial || 0,
+        estimate: dayKey.estimado || 0,
+        confirmado: dayKey.confirmado || 0,
+        finalEstimado: dayKey.finalEstimado || 0,
+        finalReal: dayKey.finalReal || 0,
         status: dayKey.status,
-        folios: dayKey.folios,
+        folios: dayKey.folios || [],
         selection: 'Todos',
         idWeek: dayKey.idWeek,
-        finalDia: dayKey.totalDay,
+        finalDia: dayKey.totalDay || 0,
       };
+
       this.daysShows.push(dayCreate);
     });
 
-    console.log(this.daysShows, 'diasmostrados');
+    // console.log(this.daysShows, '✅ días mostrados');
   }
 
   onSelectDay(day: any, event: Event): void {
@@ -117,4 +137,22 @@ export class CalendarioComponent implements OnInit {
     return this.service.onRemove(folio, dateKey);
   };
   //
+  onFilterByDepartment(day: IDaysWeek, department: string): void {
+    day.selection = department;
+
+    // Si el valor es "Todos", mostramos todos los folios originales
+    if (department === 'Todos') {
+      day.folios =
+        this.service.foliosByDate[day.day.toISOString().split('T')[0]].folios;
+      return;
+    }
+
+    // Si es un departamento específico, filtramos
+    const allFolios =
+      this.service.foliosByDate[day.day.toISOString().split('T')[0]].folios;
+
+    day.folios = allFolios.filter(
+      (folio: IFolio) => folio.department === department
+    );
+  }
 }

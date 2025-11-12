@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  HostListener,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { CalendarioComponent } from './components/calendario/calendario.component';
 import { FoliosService } from './services/folios.service';
 
@@ -21,39 +27,48 @@ export class AppComponent implements OnInit, AfterViewInit {
   public titleWeek?: ITitleWeek;
   public departaments: string[] = [];
 
+  bottomPanelOpen: boolean = false;
+  bottomPanelHeight: number = 250; // altura inicial en px
+  isResizing: boolean = false;
+  startY: number = 0;
+  startHeight: number = 0;
+
   constructor(public service: FoliosService) {}
 
   ngOnInit(): void {
     this.departaments = [...this.service.departamentsPending];
   }
 
-  ngAfterViewInit() {
-    // const resizer = document.querySelector('.resizer') as HTMLElement;
-    // const bottom = document.querySelector('.bottom-section') as HTMLElement;
-    // const container = document.querySelector('.container') as HTMLElement;
-    // let startY: number;
-    // let startHeight: number;
-    // resizer.addEventListener('mousedown', (e: MouseEvent) => {
-    //   e.preventDefault(); // evita selección de texto al arrastrar
-    //   startY = e.clientY;
-    //   startHeight = bottom.offsetHeight;
-    //   const onMouseMove = (event: MouseEvent) => {
-    //     const dy = startY - event.clientY;
-    //     const newHeight = startHeight + dy;
-    //     const minHeight = 150; // mínimo visible
-    //     const maxHeight = container.offsetHeight - 150; // límite superior
-    //     if (newHeight >= minHeight && newHeight <= maxHeight) {
-    //       bottom.style.height = `${newHeight}px`;
-    //     }
-    //   };
-    //   const onMouseUp = () => {
-    //     window.removeEventListener('mousemove', onMouseMove);
-    //     window.removeEventListener('mouseup', onMouseUp);
-    //   };
-    //   window.addEventListener('mousemove', onMouseMove);
-    //   window.addEventListener('mouseup', onMouseUp);
-    // });
+  toggleBottomPanel() {
+    this.bottomPanelOpen = !this.bottomPanelOpen;
+    if (this.bottomPanelOpen) {
+      this.bottomPanelHeight = 250;
+    }
   }
+
+  startResize(event: MouseEvent) {
+    this.isResizing = true;
+    this.startY = event.clientY;
+    this.startHeight = this.bottomPanelHeight;
+    event.preventDefault();
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    if (!this.isResizing) return;
+
+    const diff = this.startY - event.clientY; // Movimiento hacia arriba (positivo)
+    const newHeight = Math.max(100, Math.min(600, this.startHeight + diff));
+
+    this.bottomPanelHeight = newHeight;
+  }
+
+  @HostListener('document:mouseup')
+  onMouseUp() {
+    this.isResizing = false;
+  }
+
+  ngAfterViewInit() {}
   onChangeDate(date: ITitleWeek): void {
     this.titleWeek = date;
     this.onGenerate();
@@ -77,4 +92,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   onFoliosPending(): void {}
+
+  onSaveTemporality(): void {
+    this.service.onSaveProgramming(this.titleWeek);
+  }
 }

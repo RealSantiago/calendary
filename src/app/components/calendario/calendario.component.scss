@@ -148,10 +148,11 @@
 
       .final-stat {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         gap: 4px;
         // padding: 8px 10px;
-        background: rgba(39, 174, 96, 0.08);
+        justify-content: space-around;
+        // background: rgba(39, 174, 96, 0.08);
         border-radius: 8px;
 
         .stat-label {

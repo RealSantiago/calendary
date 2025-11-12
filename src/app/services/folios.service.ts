@@ -111,6 +111,86 @@ export class FoliosService {
     this._folios$.next(foliosPending);
   }
 
+  // ************
+  onGetFilterByDepartament(): void {}
+
+  // getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
+  //   if (!titleWeek) throw new Error('titleWeek es requerido');
+
+  //   const { arrayOfDays, weekNumber, year } = titleWeek;
+
+  //   // Inicializa estructura base vacía
+  //   const weekFolios: IWeekDays = {};
+
+  //   arrayOfDays.forEach((date) => {
+  //     const dayKey = date.toISOString().split('T')[0];
+  //     weekFolios[dayKey] = {
+  //       day: dayKey,
+  //       inicial: 0,
+  //       estimado: 0,
+  //       confirmado: 0,
+  //       finalEstimado: 0,
+  //       finalReal: 0,
+  //       totalDay: 0,
+  //       folios: [],
+  //       idWeek: undefined,
+  //       status: undefined,
+  //     };
+  //   });
+
+  //   return this.getProgrammingFolio({ week_number: weekNumber, year }).pipe(
+  //     map((res) => {
+  //       const { data } = res;
+
+  //       data.forEach((program) => {
+  //         const { programmed } = program;
+
+  //         Object.keys(weekFolios).forEach((key) => {
+  //           weekFolios[key].idWeek = program.id;
+  //           weekFolios[key].status = program.status;
+  //         });
+
+  //         Object.values(programmed).forEach((dayFolios) => {
+  //           // RECORREMOS CADA FOLIO
+  //           dayFolios.forEach((folio) => {
+  //             if (!folio.scheduled_payment_date) return;
+
+  //             const fecha = new Date(folio.scheduled_payment_date)
+  //               .toISOString()
+  //               .split('T')[0];
+
+  //             const dayData = weekFolios[fecha];
+  //             if (!dayData) return;
+
+  //             const alreadyExists = dayData.folios.some(
+  //               (f) => f.id === folio.id
+  //             );
+  //             if (!alreadyExists) {
+  //               dayData.folios.push(folio);
+  //             }
+
+  //             dayData.totalDay = dayData.folios.reduce(
+  //               (sum, f) => sum + Number(f.total || 0),
+  //               0
+  //             );
+  //           });
+  //         });
+  //       });
+
+  //       this.setFoliosByDate(weekFolios);
+  //       return weekFolios;
+  //     }),
+  //     catchError((error) => {
+  //       console.error('Error al obtener folios:', error);
+
+  //       // Mantén estructura vacía, evita que la app falle
+  //       this.setFoliosByDate(weekFolios);
+  //       return of(weekFolios);
+  //     })
+  //   );
+  // }
+  // ENDPOINTS
+
   getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
     if (!titleWeek) throw new Error('titleWeek es requerido');
 
@@ -139,8 +219,22 @@ export class FoliosService {
       map((res) => {
         const { data } = res;
 
+        const currentFoliosByDate = { ...this._foliosByDate$.value };
+        const foliosPendings = [...this._folios$.value];
+
+        // ** FOLIOS EXISTENTES EN _FOLIOBYDAYS
+        const existingFoliosIds = new Set(
+          Object.values(currentFoliosByDate).flatMap((day) =>
+            day.folios.map((f) => f.id)
+          )
+        );
+        console.log(existingFoliosIds, 'Existentes');
+
+        // FOLIOS PENDIENTES
+        const pedingFoliosId = new Set(foliosPendings.map((f) => f.id));
+
         data.forEach((program) => {
-          const { programmed } = program;
+          const { programmed, payments } = program;
 
           Object.keys(weekFolios).forEach((key) => {
             weekFolios[key].idWeek = program.id;
@@ -148,7 +242,6 @@ export class FoliosService {
           });
 
           Object.values(programmed).forEach((dayFolios) => {
-            // RECORREMOS CADA FOLIO
             dayFolios.forEach((folio) => {
               if (!folio.scheduled_payment_date) return;
 
@@ -159,34 +252,64 @@ export class FoliosService {
               const dayData = weekFolios[fecha];
               if (!dayData) return;
 
-              const alreadyExists = dayData.folios.some(
-                (f) => f.id === folio.id
-              );
-              if (!alreadyExists) {
-                dayData.folios.push(folio);
-              }
+              // VERIFICAR SI ESTA EN PEDIENTE
+              if (pedingFoliosId.has(folio.id)) return;
 
-              dayData.totalDay = dayData.folios.reduce(
-                (sum, f) => sum + Number(f.total || 0),
-                0
-              );
+              // VERIFICAR SI EL FOLIO YA EXISTE EN OTRO DIA DE LA SEMANA
+              if (existingFoliosIds.has(folio.id)) return;
+
+              dayData.folios.push(folio);
+              existingFoliosIds.add(folio.id);
+              // dayData.totalDay = dayData.folios.reduce(
+              //   (sum, f) => sum + Number(f.total || 0),
+              //   0
+              // );
             });
           });
         });
 
-        this.setFoliosByDate(weekFolios);
-        return weekFolios;
+        Object.values(weekFolios).forEach((day) => {
+          day.totalDay = day.folios.reduce(
+            (sum: number, folio: IFolio) => sum + Number(folio.total || 0),
+            0
+          );
+        });
+
+        //  Fusionar con lo que ya existe en foliosByDate
+
+        Object.entries(weekFolios).forEach(([key, newDay]) => {
+          const existing = currentFoliosByDate[key];
+          const existingFolios = existing?.folios || [];
+
+          const mergedFolios = [
+            ...existingFolios,
+            ...newDay.folios.filter(
+              (nf) => !existingFolios.some((ef) => ef.id === nf.id)
+            ),
+          ];
+
+          currentFoliosByDate[key] = {
+            ...existing,
+            ...newDay,
+            folios: mergedFolios,
+            totalDay: mergedFolios.reduce(
+              (sum, f) => sum + Number(f.total || 0),
+              0
+            ),
+          };
+        });
+        // Actualizamos el BehaviorSubject sin perder los datos previos
+        this._foliosByDate$.next(currentFoliosByDate);
+        return currentFoliosByDate;
       }),
       catchError((error) => {
         console.error('Error al obtener folios:', error);
-
-        // Mantén estructura vacía, evita que la app falle
-        this.setFoliosByDate(weekFolios);
-        return of(weekFolios);
+        const currentFoliosByDate = { ...this._foliosByDate$.value };
+        this._foliosByDate$.next(currentFoliosByDate);
+        return of(currentFoliosByDate);
       })
     );
   }
-  // ENDPOINTS
 
   getProgrammingFolio(dataParams: {
     week_number: number;
@@ -204,7 +327,7 @@ export class FoliosService {
       }
     });
 
-    const token: string = '9933|UJtIApJbd3bTXjghrgPiSaGDlcLIQDvpeyxO0kTF';
+    const token: string = '9937|LMDhN9j2bl1Q0Azmf1lOxF6CBKTTXCHPGFFCwhYR';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
@@ -216,4 +339,62 @@ export class FoliosService {
   }
 
   getFoliosPending(): void {}
+
+  onSaveProgramming(titleWeek?: ITitleWeek): any {
+    const foliosByDate = { ...this._foliosByDate$.value };
+
+    if (!foliosByDate || Object.keys(foliosByDate).length === 0) {
+      console.warn('No hay folios para guardar');
+      return;
+    }
+
+    const initial_amount = 1000000;
+    const status = 'confirmed';
+
+    //  Agrupamos por idWeek
+    const groupedByWeek: Record<number, any> = {};
+
+    Object.entries(foliosByDate).forEach(
+      ([dateKey, dayData]: [string, any]) => {
+        const idWeek = dayData.idWeek;
+        if (!idWeek) return; // si no tiene idWeek, lo ignoramos
+
+        if (!groupedByWeek[idWeek]) {
+          groupedByWeek[idWeek] = {
+            idWeek,
+            initial_amount,
+            status,
+            data: {
+              numberWeek: titleWeek?.weekNumber || 0,
+              year: titleWeek?.year || 0,
+            },
+          };
+        }
+
+        groupedByWeek[idWeek].data[dateKey] = {
+          inicial: dayData.inicial || 0,
+          estimado: dayData.estimado || 0,
+          confirmado: dayData.confirmado || 0,
+          folios: (dayData.folios || []).map((f: any) => f.id),
+        };
+      }
+    );
+
+    // Convertimos a arreglo
+    const payloads = Object.values(groupedByWeek);
+
+    console.log('Payload listo para guardar:', payloads);
+    return payloads;
+  }
+
+  // SEND DATA
+  onUpdateWeekPrograming(id: number, data: any): Observable<any> {
+    const token: string = '9937|LMDhN9j2bl1Q0Azmf1lOxF6CBKTTXCHPGFFCwhYR';
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+    return this.http.patch(`http://34.2.4.36:8001/api/schedule${id}`, data, {
+      headers: headers,
+    });
+  }
 }

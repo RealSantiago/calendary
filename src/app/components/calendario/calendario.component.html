@@ -48,7 +48,10 @@
 
         <mat-form-field appearance="outline" class="department-select">
           <mat-label>Departamento</mat-label>
-          <mat-select [value]="day.selection">
+          <mat-select
+            [value]="day.selection"
+            (selectionChange)="onFilterByDepartment(day, $event.value)"
+          >
             @for (food of onGetDepartaments(day.folios); track food) {
             <mat-option [value]="food">{{ food }}</mat-option>
             }
