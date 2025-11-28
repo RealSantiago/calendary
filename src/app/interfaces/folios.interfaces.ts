@@ -78,6 +78,12 @@ export interface IFolio {
   is_postponed: number;
   weekly_schedule_id: null;
   username: string;
+  /*
+  PROPIEDADES AGREGADAS (INICIAN CON C)
+  */
+  CDatePayment?: Date
+  CDateProgrammed?: Date
+  CStatus?: string
 }
 
 export interface ItemListItemList {

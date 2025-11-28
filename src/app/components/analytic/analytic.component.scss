@@ -1,5 +1,50 @@
 .container {
   width: 100%;
-  border: 1px solid black;
-  height: 100%;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  font-weight: bold;
+  border-bottom: 2px solid #000;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.header-col {
+  font-weight: bold;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.titulo {
+  width: 250px;
+  padding-inline: 10px;
+  text-transform: uppercase;
+}
+
+.grid-dias {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  text-align: center;
+  gap: 10px;
+}
+
+.folio-item {
+  background: #f2f2f2;
+  padding: 4px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.no {
+  color: #bbb;
 }

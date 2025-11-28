@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
 import {
+  IData,
   IFolio,
   IRequest,
   IWeekDayDetails,
@@ -14,7 +15,8 @@ import { ITitleWeek } from '../interfaces/calendary.interfaces';
   providedIn: 'root',
 })
 export class FoliosService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
+
 
   // FOLIOS PENDIENTES
   private _folios$ = new BehaviorSubject<any[]>([]);
@@ -111,98 +113,36 @@ export class FoliosService {
     this._folios$.next(foliosPending);
   }
 
-  // ************
-  onGetFilterByDepartament(): void {}
+  /*
+  AQQUI VAN LOS HELPERS
+  */
 
-  // getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
-  //   if (!titleWeek) throw new Error('titleWeek es requerido');
+  private getSafeDate(date: string | Date): string {
+    return new Date(date).toISOString().split('T')[0];
+  }
 
-  //   const { arrayOfDays, weekNumber, year } = titleWeek;
+  private createPaymentMap(payments: any): Map<number, any> {
+    const list = Object.values(payments || {}).flatMap((day: any) => day.map((folio: any) => ({
+      id: folio.id,
+      payment_day_adjusted: folio.payment_day_adjusted,
 
-  //   // Inicializa estructura base vacía
-  //   const weekFolios: IWeekDays = {};
+    })))
 
-  //   arrayOfDays.forEach((date) => {
-  //     const dayKey = date.toISOString().split('T')[0];
-  //     weekFolios[dayKey] = {
-  //       day: dayKey,
-  //       inicial: 0,
-  //       estimado: 0,
-  //       confirmado: 0,
-  //       finalEstimado: 0,
-  //       finalReal: 0,
-  //       totalDay: 0,
-  //       folios: [],
-  //       idWeek: undefined,
-  //       status: undefined,
-  //     };
-  //   });
+    return new Map(list.map((item: any) => [item.id, item]))
+  }
 
-  //   return this.getProgrammingFolio({ week_number: weekNumber, year }).pipe(
-  //     map((res) => {
-  //       const { data } = res;
 
-  //       data.forEach((program) => {
-  //         const { programmed } = program;
+  private mergeFolios(existing: IFolio[], incoming: IFolio[]): IFolio[] {
+    const existingIds = new Set(existing.map((f) => f.id))
+    return [...existing, ...incoming.filter((f) => !existingIds.has(f.id))]
+  }
 
-  //         Object.keys(weekFolios).forEach((key) => {
-  //           weekFolios[key].idWeek = program.id;
-  //           weekFolios[key].status = program.status;
-  //         });
-
-  //         Object.values(programmed).forEach((dayFolios) => {
-  //           // RECORREMOS CADA FOLIO
-  //           dayFolios.forEach((folio) => {
-  //             if (!folio.scheduled_payment_date) return;
-
-  //             const fecha = new Date(folio.scheduled_payment_date)
-  //               .toISOString()
-  //               .split('T')[0];
-
-  //             const dayData = weekFolios[fecha];
-  //             if (!dayData) return;
-
-  //             const alreadyExists = dayData.folios.some(
-  //               (f) => f.id === folio.id
-  //             );
-  //             if (!alreadyExists) {
-  //               dayData.folios.push(folio);
-  //             }
-
-  //             dayData.totalDay = dayData.folios.reduce(
-  //               (sum, f) => sum + Number(f.total || 0),
-  //               0
-  //             );
-  //           });
-  //         });
-  //       });
-
-  //       this.setFoliosByDate(weekFolios);
-  //       return weekFolios;
-  //     }),
-  //     catchError((error) => {
-  //       console.error('Error al obtener folios:', error);
-
-  //       // Mantén estructura vacía, evita que la app falle
-  //       this.setFoliosByDate(weekFolios);
-  //       return of(weekFolios);
-  //     })
-  //   );
-  // }
-  // ENDPOINTS
-
-  getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
-    if (!titleWeek) throw new Error('titleWeek es requerido');
-
-    const { arrayOfDays, weekNumber, year } = titleWeek;
-
-    // Inicializa estructura base vacía
-    const weekFolios: IWeekDays = {};
-
-    arrayOfDays.forEach((date) => {
-      const dayKey = date.toISOString().split('T')[0];
-      weekFolios[dayKey] = {
-        day: dayKey,
+  // ESTRUCTURA DE LA SEMANA
+  private prepareWeek(arrayOfDays: Date[]): IWeekDays {
+    return arrayOfDays.reduce((acc: any, date: any) => {
+      const key = this.getSafeDate(date)
+      acc[key] = {
+        day: key,
         inicial: 0,
         estimado: 0,
         confirmado: 0,
@@ -212,100 +152,149 @@ export class FoliosService {
         folios: [],
         idWeek: undefined,
         status: undefined,
+      }
+      return acc
+    }, {} as IWeekDays)
+  }
+
+  // 
+  private processPayments(program: any): any {
+    const paymentMap = this.createPaymentMap(program.payments)
+    const paymentsTransformed = this.onTransformPayments(program.payments)
+    return { paymentMap, paymentsTransformed }
+  }
+
+  // TRANSFORMAR LOS PAGOS
+  onTransformPayments(payments: any): any {
+    // payment_day_adjusted  => fecha de pago yyyy-mm-dd
+    const result: any = {}
+
+    Object.values(payments).forEach((payment: any) => {
+      payment.forEach((p: any) => {
+        const dept = `${p.department.toLowerCase()}`;
+        const date = p.payment_day_adjusted.split(" ")[0];
+        // const date = p.scheduled_payment_date
+
+        if (!result[dept]) {
+          result[dept] = {}
+        }
+
+        if (!result[dept][date]) {
+          result[dept][date] = []
+        }
+
+        result[dept][date].push(p)
+
+
+      })
+    })
+
+    console.log(result, 'result');
+    return result
+  }
+
+  private mergearConFoliosPrevios(
+    weekFolios: IWeekDays,
+    currentFoliosByDate: IWeekDays
+  ): IWeekDays {
+    const finalObj = { ...currentFoliosByDate };
+
+    for (const [key, day] of Object.entries(weekFolios)) {
+      const existing = finalObj[key]?.folios || [];
+      const merged = this.mergeFolios(existing, day.folios);
+
+      finalObj[key] = {
+        ...finalObj[key],
+        ...day,
+        folios: merged,
+        totalDay: merged.reduce((s, f) => s + Number(f.total || 0), 0),
       };
-    });
+    }
+
+    return finalObj;
+  }
+
+
+  // ROCESAR FOLIOS PROGRAADIS
+  private processFoliosProgrammed(programmed: any, weekFolios: IWeekDays, helpers: { pendingIds: Set<number>; existingIds: Set<number>; paymentMap: Map<number, any> }): any {
+
+    const { pendingIds, existingIds, paymentMap } = helpers
+    for (const dayFolios of Object.values(programmed.programmed || {})) {
+      for (const folio of dayFolios as IFolio[]) {
+        if (!folio.scheduled_payment_date) continue
+
+
+        const payment = paymentMap.get(folio.id)
+        console.log(payment, 'payment');
+
+        const realDate = payment ? payment.payment_day_adjusted.split(' ')[0] : folio.scheduled_payment_date
+
+        const day = weekFolios[realDate]
+
+        if (!day) continue
+
+        if (pendingIds.has(folio.id)) continue
+        if (existingIds.has(folio.id)) continue
+
+        folio.CDatePayment = payment ? payment.payment_day_adjusted.split(' ')[0] : null
+        folio.CDateProgrammed = folio.scheduled_payment_date
+        folio.CStatus = payment ? 'Pagado' : 'Pendiente'
+
+        day.folios.push(folio)
+        existingIds.add(folio.id)
+      }
+    }
+  }
+
+  private calcTotal(weekFolios: IWeekDays) {
+    Object.values(weekFolios).forEach((day) => {
+      day.totalDay = day.folios.reduce((acc, folio) => acc + Number(folio.total || 0), 0)
+    })
+  }
+
+  getAndTransformFoliosByWeek(titleWeek: ITitleWeek): Observable<IWeekDays> {
+    if (!titleWeek) throw new Error('titleWeek es requerido');
+
+    const { arrayOfDays, weekNumber, year } = titleWeek as ITitleWeek;
+
+    const weekFolios = this.prepareWeek(arrayOfDays);
+    const currentFoliosByDate = { ...this._foliosByDate$.value };
+    const pendingIds = new Set(this._folios$.value.map((f) => f.id));
+    const existingIds = new Set(
+      Object.values(currentFoliosByDate).flatMap(d => d.folios.map(f => f.id))
+    );
 
     return this.getProgrammingFolio({ week_number: weekNumber, year }).pipe(
       map((res) => {
-        const { data } = res;
+        let paymentsTransformed: any = {};
 
-        const currentFoliosByDate = { ...this._foliosByDate$.value };
-        const foliosPendings = [...this._folios$.value];
+        for (const program of res.data) {
+          const { paymentMap, paymentsTransformed: pt } = this.processPayments(program);
+          paymentsTransformed = pt;
 
-        // ** FOLIOS EXISTENTES EN _FOLIOBYDAYS
-        const existingFoliosIds = new Set(
-          Object.values(currentFoliosByDate).flatMap((day) =>
-            day.folios.map((f) => f.id)
-          )
-        );
-        console.log(existingFoliosIds, 'Existentes');
-
-        // FOLIOS PENDIENTES
-        const pedingFoliosId = new Set(foliosPendings.map((f) => f.id));
-
-        data.forEach((program) => {
-          const { programmed, payments } = program;
-
-          Object.keys(weekFolios).forEach((key) => {
-            weekFolios[key].idWeek = program.id;
-            weekFolios[key].status = program.status;
+          // Set idWeek y status
+          Object.values(weekFolios).forEach((d) => {
+            d.idWeek = program.id;
+            d.status = program.status;
           });
 
-          Object.values(programmed).forEach((dayFolios) => {
-            dayFolios.forEach((folio) => {
-              if (!folio.scheduled_payment_date) return;
-
-              const fecha = new Date(folio.scheduled_payment_date)
-                .toISOString()
-                .split('T')[0];
-
-              const dayData = weekFolios[fecha];
-              if (!dayData) return;
-
-              // VERIFICAR SI ESTA EN PEDIENTE
-              if (pedingFoliosId.has(folio.id)) return;
-
-              // VERIFICAR SI EL FOLIO YA EXISTE EN OTRO DIA DE LA SEMANA
-              if (existingFoliosIds.has(folio.id)) return;
-
-              dayData.folios.push(folio);
-              existingFoliosIds.add(folio.id);
-              // dayData.totalDay = dayData.folios.reduce(
-              //   (sum, f) => sum + Number(f.total || 0),
-              //   0
-              // );
-            });
+          this.processFoliosProgrammed(program, weekFolios, {
+            pendingIds,
+            existingIds,
+            paymentMap,
           });
-        });
+        }
 
-        Object.values(weekFolios).forEach((day) => {
-          day.totalDay = day.folios.reduce(
-            (sum: number, folio: IFolio) => sum + Number(folio.total || 0),
-            0
-          );
-        });
+        this.calcTotal(weekFolios);
 
-        //  Fusionar con lo que ya existe en foliosByDate
+        const merged = this.mergearConFoliosPrevios(weekFolios, currentFoliosByDate);
 
-        Object.entries(weekFolios).forEach(([key, newDay]) => {
-          const existing = currentFoliosByDate[key];
-          const existingFolios = existing?.folios || [];
+        this._foliosByDate$.next(merged);
 
-          const mergedFolios = [
-            ...existingFolios,
-            ...newDay.folios.filter(
-              (nf) => !existingFolios.some((ef) => ef.id === nf.id)
-            ),
-          ];
-
-          currentFoliosByDate[key] = {
-            ...existing,
-            ...newDay,
-            folios: mergedFolios,
-            totalDay: mergedFolios.reduce(
-              (sum, f) => sum + Number(f.total || 0),
-              0
-            ),
-          };
-        });
-        // Actualizamos el BehaviorSubject sin perder los datos previos
-        this._foliosByDate$.next(currentFoliosByDate);
-        return currentFoliosByDate;
+        return paymentsTransformed;
       }),
-      catchError((error) => {
-        console.error('Error al obtener folios:', error);
-        const currentFoliosByDate = { ...this._foliosByDate$.value };
-        this._foliosByDate$.next(currentFoliosByDate);
+      catchError(() => {
+        this._foliosByDate$.next({ ...currentFoliosByDate });
         return of(currentFoliosByDate);
       })
     );
@@ -327,7 +316,7 @@ export class FoliosService {
       }
     });
 
-    const token: string = '9937|LMDhN9j2bl1Q0Azmf1lOxF6CBKTTXCHPGFFCwhYR';
+    const token: string = '9951|wiCkpyu7MjAMJVGXCDJfDWPQiNEHFoa7EVxLREz6';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
@@ -338,10 +327,11 @@ export class FoliosService {
     });
   }
 
-  getFoliosPending(): void {}
 
   onSaveProgramming(titleWeek?: ITitleWeek): any {
     const foliosByDate = { ...this._foliosByDate$.value };
+    console.log(foliosByDate, 'foliosByDate');
+
 
     if (!foliosByDate || Object.keys(foliosByDate).length === 0) {
       console.warn('No hay folios para guardar');
@@ -349,52 +339,70 @@ export class FoliosService {
     }
 
     const initial_amount = 1000000;
-    const status = 'confirmed';
-
-    //  Agrupamos por idWeek
+    const status = 'in_working';
     const groupedByWeek: Record<number, any> = {};
 
-    Object.entries(foliosByDate).forEach(
-      ([dateKey, dayData]: [string, any]) => {
-        const idWeek = dayData.idWeek;
-        if (!idWeek) return; // si no tiene idWeek, lo ignoramos
+    Object.entries(foliosByDate).forEach(([dateKey, dayData]: [string, any]) => {
+      const idWeek = dayData.idWeek;
+      if (!idWeek) return;
 
-        if (!groupedByWeek[idWeek]) {
-          groupedByWeek[idWeek] = {
-            idWeek,
-            initial_amount,
-            status,
-            data: {
-              numberWeek: titleWeek?.weekNumber || 0,
-              year: titleWeek?.year || 0,
-            },
-          };
-        }
+      // Extraemos los folios válidos
+      const folios = (dayData.folios || []).map((f: any) => f.id).filter(Boolean);
+      const statusDay = dayData.status;
 
-        groupedByWeek[idWeek].data[dateKey] = {
-          inicial: dayData.inicial || 0,
-          estimado: dayData.estimado || 0,
-          confirmado: dayData.confirmado || 0,
-          folios: (dayData.folios || []).map((f: any) => f.id),
+      if (statusDay === 'confirmed') return
+
+      // Si la semana no existe, la inicializamos
+      if (!groupedByWeek[idWeek]) {
+        groupedByWeek[idWeek] = {
+          idWeek,
+          initial_amount,
+          status,
+          data: {
+            numberWeek: titleWeek?.weekNumber || 0,
+            year: titleWeek?.year || 0,
+          },
+          hasFolios: false, // bandera para saber si hay al menos un folio en la semana
         };
       }
-    );
 
-    // Convertimos a arreglo
-    const payloads = Object.values(groupedByWeek);
+      // Guardamos el día (aunque luego se filtrará si no hay folios)
+      groupedByWeek[idWeek].data[dateKey] = {
+        inicial: dayData.inicial || 0,
+        estimado: dayData.estimado || 0,
+        confirmado: dayData.confirmado || 0,
+        folios,
+      };
+
+      // Si este día tiene folios, marcamos la semana como válida
+      if (folios.length > 0) {
+        groupedByWeek[idWeek].hasFolios = true;
+      }
+    });
+
+    // Convertimos a arreglo y filtramos las semanas sin folios
+    const payloads = Object.values(groupedByWeek)
+      .filter((week: any) => week.hasFolios)
+      .map(({ hasFolios, ...rest }) => rest); // removemos la bandera auxiliar
 
     console.log('Payload listo para guardar:', payloads);
     return payloads;
   }
 
+
   // SEND DATA
   onUpdateWeekPrograming(id: number, data: any): Observable<any> {
-    const token: string = '9937|LMDhN9j2bl1Q0Azmf1lOxF6CBKTTXCHPGFFCwhYR';
+    const token: string = '9951|wiCkpyu7MjAMJVGXCDJfDWPQiNEHFoa7EVxLREz6';
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
-    return this.http.patch(`http://34.2.4.36:8001/api/schedule${id}`, data, {
+    return this.http.patch(`http://34.2.4.36:8001/api/schedule/${id}`, data, {
       headers: headers,
     });
   }
+
+
+  // FUNCION QUE TRANSFORMA LOS FOLIOS PAGADOS
+
 }
+

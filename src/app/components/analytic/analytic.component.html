@@ -1,6 +1,43 @@
 <div class="container">
-  <div>
-    <span>Hola</span>
-    <span>Adios</span>
-  </div>
+
+    <!-- ENCABEZADO -->
+    <div class="header-row">
+        <span class="header-col titulo">DEPARTAMENTOS</span>
+        <div class="grid-dias">
+            <span class="header-col" *ngFor="let day of daysWeek?.arrayOfDays">
+                {{ day | date: 'EEEE' }}
+            </span>
+        </div>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="fila" *ngFor="let departamento of payments | keyvalue">
+        <span class="titulo">{{ departamento.key }}</span>
+
+        <!-- UNA SOLA GRID POR FILA -->
+        <div class="grid-dias">
+
+            <!-- UNA COLUMNA POR DÍA -->
+            <div *ngFor="let day of daysWeek?.arrayOfDays">
+
+                <!-- SI EXISTEN FOLIOS PARA ESE DÍA -->
+                <ng-container *ngIf="departamento.value?.[dateTransform(day)] as folios; else noData">
+
+                    <!-- LISTA DE FOLIOS -->
+                    <div class="folio-item" *ngFor="let folio of folios">
+                        <span>{{ folio.id }}</span>
+                    </div>
+
+                </ng-container>
+
+                <!-- SI NO HAY FOLIOS -->
+                <ng-template #noData>
+                    <span class="no">–</span>
+                </ng-template>
+
+            </div>
+
+        </div>
+    </div>
+
 </div>

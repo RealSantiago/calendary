@@ -18,7 +18,7 @@ import { IFolio, IWeekDayDetails } from '../../interfaces/folios.interfaces';
 export class CalendarioComponent implements OnInit {
   @Input() titleWeek?: ITitleWeek;
 
-  constructor(public service: FoliosService) {}
+  constructor(public service: FoliosService) { }
 
   public daysOfWeek: string[] = [
     'Lunes',
@@ -26,6 +26,7 @@ export class CalendarioComponent implements OnInit {
     'Miércoles',
     'Jueves',
     'Viernes',
+    'Sábado',
   ];
   public daysShows: IDaysWeek[] = [];
 
@@ -44,6 +45,7 @@ export class CalendarioComponent implements OnInit {
   onUpdateWeek(): void {
     this.daysShows = [];
     if (!this.titleWeek) return;
+    console.log(this.titleWeek, 'titleWeek');
 
     const data = { ...this.service.foliosByDate };
     const { arrayOfDays } = this.titleWeek;
@@ -52,7 +54,7 @@ export class CalendarioComponent implements OnInit {
       const dayTransform = day.toISOString().split('T')[0];
       const dayKey: IWeekDayDetails | undefined = data[dayTransform];
 
-      // ⚠️ Si no hay información del día, creamos un objeto vacío
+      // Si no hay información del día, creamos un objeto vacío
       if (!dayKey) {
         this.daysShows.push({
           day,
@@ -87,7 +89,7 @@ export class CalendarioComponent implements OnInit {
       this.daysShows.push(dayCreate);
     });
 
-    // console.log(this.daysShows, '✅ días mostrados');
+    // console.log(this.daysShows, días mostrados');
   }
 
   onSelectDay(day: any, event: Event): void {
@@ -102,7 +104,7 @@ export class CalendarioComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     let value = Number(input.value);
     input.value = value.toString();
-    console.log(Number(value));
+    console.log(Number(value), property);
   }
 
   onDragOver(event: DragEvent): void {
@@ -124,13 +126,30 @@ export class CalendarioComponent implements OnInit {
     this.service.onMoveBetweenDays(folio, fromDate, toDate);
   }
 
-  onGetDepartaments(folios: IFolio[]): any {
+  onGetDepartaments(day: any): any {
+    // console.log(day, 'days');
+    const dayFormatted = day.toISOString().split('T')[0];
+    const folios = this.service.foliosByDate[dayFormatted]?.folios || [];
     const uniqDepartament = new Set(
-      folios.map((folio) => folio.department).filter((d) => d != null)
+      folios.map((folio: any) => folio.department).filter((d: any) => d != null)
     );
     const result = Array.from(uniqDepartament);
     result.unshift('Todos');
     return result;
+
+    // TODO: MODIFICACION DE LA FORMA DE OBTENER LOS DEPARTAMENTOS DE CADA DIA
+    // DELETE LO COMENTANDO !!!!!!!!!
+
+    // const allFolios
+    // console.log(folios, 'foliosooo');
+
+    // const copyie = [...folios]
+    // const uniqDepartament = new Set(
+    //   copyie.map((folio) => folio.department).filter((d) => d != null)
+    // );
+    // const result = Array.from(uniqDepartament);
+    // result.unshift('Todos');
+    // return result;
   }
 
   onRemove = (folio: IFolio, dateKey: any) => {
@@ -152,7 +171,7 @@ export class CalendarioComponent implements OnInit {
       this.service.foliosByDate[day.day.toISOString().split('T')[0]].folios;
 
     day.folios = allFolios.filter(
-      (folio: IFolio) => folio.department === department
+      (folio: IFolio) => folio.department?.toLowerCase() === department.toLowerCase()
     );
   }
 }

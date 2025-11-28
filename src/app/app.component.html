@@ -11,26 +11,21 @@
     </div>
     <div class="sub-container">
       <div class="content">
-        <app-custom-date-picker
-          (selectWeek)="onChangeDate($event)"
-        ></app-custom-date-picker>
+        <app-custom-date-picker (selectWeek)="onChangeDate($event)"></app-custom-date-picker>
       </div>
     </div>
     <div class="sub-container">
       <div class="actions">
-        <button (click)="onSaveTemporality()">Borrados</button>
-        <button (click)="onTest()">Completado</button>
+        <button (click)="onSaveTemporality()">Guardar Cambios</button>
+        <button (click)="onTest()">Finalizar Semana</button>
       </div>
     </div>
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <div
-    class="content main-content"
-    [style.flex-basis]="
+  <div class="content main-content" [style.flex-basis]="
       bottomPanelOpen ? 100 - bottomPanelHeight + '%' : '100%'
-    "
-  >
+    ">
     <div class="left">
       <mat-form-field appearance="outline">
         <mat-label>Departamento</mat-label>
@@ -40,55 +35,36 @@
           }
         </mat-select>
       </mat-form-field>
-      <app-card
-        *ngFor="let folio of service.folios$ | async"
-        [dataCard]="folio"
-      ></app-card>
+      <app-card *ngFor="let folio of service.folios$ | async" [dataCard]="folio"></app-card>
     </div>
     <div class="center">
-      <app-calendario
-        style="
+      <app-calendario style="
           width: 100%;
           height: 100%;
           flex: 1;
           display: flex;
           flex-direction: column;
-        "
-        [titleWeek]="titleWeek"
-      ></app-calendario>
+        " [titleWeek]="titleWeek"></app-calendario>
     </div>
   </div>
 
   <!-- DIVISOR RESIZABLE -->
-  <div
-    *ngIf="bottomPanelOpen"
-    class="resizer"
-    (mousedown)="startResize($event)"
-  ></div>
+  <div *ngIf="bottomPanelOpen" class="resizer" (mousedown)="startResize($event)"></div>
 
   <!-- SECCIÓN INFERIOR COLAPSABLE -->
-  <div
-    class="bottom-section"
-    [class.open]="bottomPanelOpen"
-    [class.closed]="!bottomPanelOpen"
-    [style.height.px]="bottomPanelOpen ? bottomPanelHeight : 0"
-  >
+  <div class="bottom-section" [class.open]="bottomPanelOpen" [class.closed]="!bottomPanelOpen"
+    [style.height.px]="bottomPanelOpen ? bottomPanelHeight : 0">
     <div class="days-header" *ngIf="bottomPanelOpen">
-      <h3>Detalles de la Semana</h3>
+      <h3>Folios Pagados</h3>
       <button class="close-btn" (click)="toggleBottomPanel()">✕</button>
     </div>
     <div class="days-content" *ngIf="bottomPanelOpen">
-      <p>Resumen o detalles de la semana</p>
+      <app-analytic [payments]="allPayments" [daysWeek]="titleWeek"></app-analytic>
     </div>
   </div>
 
   <!-- BOTÓN FLOTANTE PARA ABRIR -->
-  <button
-    *ngIf="!bottomPanelOpen"
-    class="floating-btn"
-    (click)="toggleBottomPanel()"
-    title="Mostrar detalles"
-  >
+  <button *ngIf="!bottomPanelOpen" class="floating-btn" (click)="toggleBottomPanel()" title="Mostrar detalles">
     ▲
   </button>
 </div>

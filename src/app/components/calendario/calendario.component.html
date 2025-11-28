@@ -11,13 +11,8 @@
           <div class="stat-item">
             <span class="stat-label">Estimado</span>
             <!-- <span class="stat-value accent">{{ day.estimate | currency }}</span> -->
-            <input
-              type="number"
-              style="width: 100%"
-              [value]="day.estimate"
-              (keyup.enter)="onAddValue($event, 'estimate')"
-              min="0"
-            />
+            <input type="number" style="width: 100%" [value]="day.estimate"
+              (keyup.enter)="onAddValue($event, 'estimate')" min="0" />
           </div>
         </div>
 
@@ -25,13 +20,8 @@
           <div class="stat-item">
             <span class="stat-label">Confirmado</span>
             <!-- <span class="stat-value">{{ day.confirmado | currency }}</span> -->
-            <input
-              type="number"
-              style="width: 100%"
-              [value]="day.confirmado"
-              (change)="onAddValue($event, 'confirmado')"
-              min="0"
-            />
+            <input type="number" style="width: 100%" [value]="day.confirmado"
+              (change)="onAddValue($event, 'confirmado')" min="0" />
           </div>
           <div class="stat-item">
             <span class="stat-label">Final Est.</span>
@@ -48,14 +38,13 @@
 
         <mat-form-field appearance="outline" class="department-select">
           <mat-label>Departamento</mat-label>
-          <mat-select
-            [value]="day.selection"
-            (selectionChange)="onFilterByDepartment(day, $event.value)"
-          >
-            @for (food of onGetDepartaments(day.folios); track food) {
+          <mat-select [value]="day.selection" (selectionChange)="onFilterByDepartment(day, $event.value)">
+            @for (food of onGetDepartaments(day.day); track food) {
             <mat-option [value]="food">{{ food }}</mat-option>
             }
           </mat-select>
+          <mat-hint align="end">
+            Total de folios {{ day.folios.length }}</mat-hint>
         </mat-form-field>
       </div>
     </ng-container>
@@ -63,13 +52,8 @@
 
   <!-- GRID DE DÍAS -->
   <div class="days-grid">
-    <div
-      class="day-cell"
-      *ngFor="let day of daysShows"
-      (click)="onSelectDay(day, $event)"
-      (dragover)="onDragOver($event)"
-      (drop)="onDrop($event, day.day)"
-    >
+    <div class="day-cell" *ngFor="let day of daysShows" (dragover)="onDragOver($event)"
+      (drop)="onDrop($event, day.day)">
       <!-- CABECERA DEL DÍA -->
       <div class="day-header">
         <div class="day-date">
@@ -86,13 +70,8 @@
 
       <!-- LISTA DE CARDS -->
       <div class="folio-list">
-        <app-card
-          *ngFor="let folio of day.folios"
-          [status]="day.status"
-          [dataCard]="folio"
-          [fromDate]="day.day"
-          [onAction]="onRemove.bind(this, folio, day.day)"
-        ></app-card>
+        <app-card *ngFor="let folio of day.folios" [status]="day.status" [dataCard]="folio" [fromDate]="day.day"
+          [onAction]="onRemove.bind(this, folio, day.day)"></app-card>
       </div>
     </div>
   </div>

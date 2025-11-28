@@ -1,9 +1,4 @@
-<div
-  class="card-container"
-  [draggable]="status !== 'in_working'"
-  (dragstart)="onDragStar($event)"
-  *ngIf="dataCard"
->
+<div class="card-container" [draggable]="status !== 'confirmed'" (dragstart)="onDragStar($event)" *ngIf="dataCard">
   <div class="card-left-accent"></div>
 
   <!-- SECCIÓN DE ARRIBA (Contenido + Info) -->
@@ -12,11 +7,8 @@
       <div class="content-main">
         <span class="department">{{
           (dataCard.department | titlecase) || "No definido"
-        }}</span>
-        <div
-          class="description"
-          [matTooltip]="dataCard.item_list | transformData"
-        >
+          }}</span>
+        <div class="description" [matTooltip]="dataCard.item_list | transformData">
           {{ dataCard.item_list | transformData }}
         </div>
         <div class="destiny">
@@ -38,16 +30,18 @@
       </div>
       <div class="dates-row">
         <div class="date-item">
-          <span class="date-label">Fecha Pago</span>
-          <span class="date-value">{{
-            dataCard.scheduled_payment_date | date : "mediumDate"
-          }}</span>
-        </div>
-        <div class="date-item">
           <span class="date-label">Fecha Programado</span>
           <span class="date-value">{{
-            dataCard.scheduled_payment_date | date : "mediumDate"
-          }}</span>
+            dataCard.CDateProgrammed | date : "mediumDate"
+            }}</span>
+
+        </div>
+        <div class="date-item">
+          <span class="date-label">Fecha Pago</span>
+          <span class="date-value">{{
+            (dataCard.CDatePayment | date : "mediumDate") || "Pendiente"
+            }}</span>
+          <span class="date-value">Estado: {{dataCard.CStatus | titlecase}}</span>
         </div>
       </div>
       <div class="price-item total">
@@ -59,12 +53,7 @@
 
   <!-- BOTÓN ABAJO -->
   <div class="actions">
-    <button
-      class="delete-btn"
-      title="Eliminar"
-      (click)="onDelete($event)"
-      *ngIf="onAction"
-    >
+    <button class="delete-btn" title="Eliminar" (click)="onDelete($event)" *ngIf="onAction && status !== 'confirmed'">
       <mat-icon>delete_outline</mat-icon>
       Eliminar
     </button>

@@ -26,14 +26,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public titleWeek?: ITitleWeek;
   public departaments: string[] = [];
-
+  public allPayments: any = {};
   bottomPanelOpen: boolean = false;
   bottomPanelHeight: number = 250; // altura inicial en px
   isResizing: boolean = false;
   startY: number = 0;
   startHeight: number = 0;
 
-  constructor(public service: FoliosService) {}
+  constructor(public service: FoliosService) { }
 
   ngOnInit(): void {
     this.departaments = [...this.service.departamentsPending];
@@ -68,7 +68,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.isResizing = false;
   }
 
-  ngAfterViewInit() {}
+  ngAfterViewInit() { }
   onChangeDate(date: ITitleWeek): void {
     this.titleWeek = date;
     this.onGenerate();
@@ -80,6 +80,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.service.getAndTransformFoliosByWeek(this.titleWeek).subscribe({
       next: (weekFolios) => {
         console.log('Datos actualizados:', weekFolios);
+        this.allPayments = weekFolios;
       },
       error: (err) => {
         console.error('Error al obtener folios:', err);
@@ -91,9 +92,36 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log(this.service.foliosByDate, 'test');
   }
 
-  onFoliosPending(): void {}
+  onFoliosPending(): void { }
 
   onSaveTemporality(): void {
-    this.service.onSaveProgramming(this.titleWeek);
+    const data = this.service.onSaveProgramming(this.titleWeek);
+    console.log(this.titleWeek);
+
+    console.log(data);
+
+    // return
+
+
+
+    if (!data || data.length === 0) {
+      console.warn('No hay datos para guardar');
+      return;
+    }
+
+
+    data.forEach((weekData: any) => {
+      const { idWeek, ...payload } = weekData;
+
+      console.log('ID de la semana:', idWeek);
+      console.log('Payload a enviar:', payload);
+
+
+      this.service.onUpdateWeekPrograming(idWeek, payload).subscribe({
+        next: (res) => console.log(`Semana ${idWeek} actualizada`, res),
+        error: (err) => console.error(`Error en semana ${idWeek}`, err),
+      });
+    });
   }
+
 }

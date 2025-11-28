@@ -68,12 +68,19 @@ export class CustomDatePickerComponent implements OnInit, AfterViewInit {
 
   private setWeekRange(date: Date): void {
     const monday = this.getStartWeek(date);
-    const friday = new Date(monday);
-    friday.setDate(monday.getDate() + 4);
+    // const friday = new Date(monday);
+    // friday.setDate(monday.getDate() + 4);
+
+    // this.startOfWeek = monday;
+    // this.endOfWeek = friday;
+    // this.dateSelection = monday;
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
 
     this.startOfWeek = monday;
-    this.endOfWeek = friday;
+    this.endOfWeek = saturday;
     this.dateSelection = monday;
+
   }
 
   private getStartWeek(date: Date): Date {
@@ -93,8 +100,10 @@ export class CustomDatePickerComponent implements OnInit, AfterViewInit {
 
     // Bloquear sábado y domingo
     const day = date.getDay();
-    if (day === 0 || day === 6) return false;
-
+    // if (day === 0 || day === 6) return false; bloquear sábado y domingo
+    if (day === 0) { // solo bloquea el domingo
+      return false;
+    }
     // Lunes de la semana actual
     const today = new Date();
     const currentWeekStart = this.getStartWeek(today);
